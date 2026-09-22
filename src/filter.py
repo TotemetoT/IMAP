@@ -17,9 +17,9 @@ def CRN(val):
                 return row
         return None
 #TODO Refactor for Load_CSV()
-def Location(val):
+def Location(val, rooms=Load_CSV()):
     L_dict = {}
-    for row in Load_CSV(): 
+    for row in rooms: 
         if (row.location).lower()[:len(val)] == val.lower():
             if (row.location)[-5].isnumeric():
                 if (row.location)[-4:] == " ": v = 3
@@ -36,25 +36,15 @@ def Time(t, d):
     t = int(t)
     courses = Load_CSV()
 
-    used = {}
-    all_rooms = set()
+    used = []
+    unused = []
 
     for course in courses:
-        location = course.location
-        days = course.days
-        times = course.time
+        time_ranges = [x.strip() for x in course.time.split(";")]
 
-        locations = [x.strip() for x in location.split(";")]
-        time_ranges = [x.strip() for x in times.split(";")]
-
-        # Keep track of every room
-        for room in locations:
-            all_rooms.add(room)
-
-        # Determine whether THIS course is happening at t on d
         course_is_active = False
 
-        if d in days:
+        if d in course.days:
             for time_range in time_ranges:
                 start, end = time_range.split("-")
 
@@ -62,39 +52,82 @@ def Time(t, d):
                     course_is_active = True
                     break
 
-        # If the course is active, its rooms are being used
         if course_is_active:
-            for room in locations:
-                used.setdefault(room, []).append(course.CRN)
-
-    # Anything not used is unused
-    unused = {}
-
-    for room in all_rooms:
-        if room not in used:
-            unused[room] = []
-
-    # Converting Dicts
-    used_rooms = {}
-    unused_rooms = {}
-
-    for key in used:
-        location, room = key.split(" ")[0], key.split(" ")[-1]
-
-        if location not in used_rooms:
-            used_rooms[location] = [room]
+            used.append(course)
         else:
-            used_rooms[location].append(room)
+            unused.append(course)
 
-    for key in unused:
-        location, room = key.split(" ")[0], key.split(" ")[-1]
+    return used, unused
 
-        if location not in unused_rooms:
-            unused_rooms[location] = [room]
-        else:
-            unused_rooms[location].append(room)
+# def Time(t, d):
+#     t = int(t)
+#     courses = Load_CSV()
 
-    return u.clean_dict(used_rooms), u.clean_dict(unused_rooms)
+#     used = []
+#     all_rooms = set()
+
+#     for course in courses:
+#         location = course.location
+#         days = course.days
+#         times = course.time
+
+#         locations = [x.strip() for x in location.split(";")]
+#         time_ranges = [x.strip() for x in times.split(";")]
+
+#         # Keep track of every room
+#         for room in locations:
+#             all_rooms.add(room)
+
+#         # Determine whether THIS course is happening at t on d
+#         course_is_active = False
+
+#         if d in days:
+#             for time_range in time_ranges:
+#                 start, end = time_range.split("-")
+
+#                 if int(start) <= t <= int(end):
+#                     course_is_active = True
+#                     break
+
+#         # If the course is active, its rooms are being used
+#         if course_is_active:
+#             for room in locations:
+#                 used.setdefault(room, []).append(course)
+
+#     # Anything not used is unused
+#     unused = []
+
+#     for room in all_rooms:
+#         if room not in used:
+#             unused.append(room)
+
+#     return used, unused
+
+#     # Converting Dicts
+#     # used_rooms = {}
+#     # unused_rooms = {}
+
+#     # for key in used:
+#     #     location, room = key.split(" ")[0], key.split(" ")[-1]
+
+#     #     if location not in used_rooms:
+#     #         used_rooms[location] = [room]
+#     #     else:
+#     #         used_rooms[location].append(room)
+
+#     # for key in unused:
+#     #     location, room = key.split(" ")[0], key.split(" ")[-1]
+
+#     #     if location not in unused_rooms:
+#     #         unused_rooms[location] = [room]
+#     #     else:
+#     #         unused_rooms[location].append(room)
+
+#     # return u.clean_dict(used_rooms), u.clean_dict(unused_rooms)
 
 if __name__ == "__main__":
-    print(Time(1100, "M"))
+    used = Time(1000, "W")[0]
+    for room in used:
+        # print(room.location)
+        pass
+    print(Location('SERC', used))
