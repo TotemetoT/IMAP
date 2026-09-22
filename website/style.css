@@ -1,0 +1,155 @@
+/* 
+NOTES:
+
+Main Colors: 
+Dark Blue : #004d99
+Light Blue: #2982ff
+White     : #e8e8e8
+Grey      : #808080
+Green     : #e4ece0
+
+*/
+
+body {
+    margin: 0;
+}
+
+/* NavBar */
+.navbar {
+    background-color: #004d99;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 30px;
+    position: relative;
+    color: white;
+}
+
+/* Logo */
+.navbar-logo img {
+    height: 10vh;
+    width: auto;
+}
+
+/* Centered title */
+.navbar-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5em;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+/* NavBar Links */
+.navbar-links {
+    position: left;
+    list-style: none;
+    display: flex;
+    gap: 25px;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-links li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.navbar-links li a:hover {
+    background-color: #2982ff; 
+    color: #004d99
+}
+
+/* Main dropdown container */
+.dropdown {
+    position: relative;
+}
+
+/* First-level dropdown */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+
+    background-color: #06325f;
+    min-width: 200px;
+
+    list-style: none;
+    margin: 0;
+    padding: 10px 0;
+
+    z-index: 1000;
+}
+
+/* Show first-level dropdown */
+.dropdown:hover > .dropdown-menu {
+    display: block;
+}
+
+/* Dropdown links */
+.dropdown-menu li {
+    position: relative;
+}
+
+.dropdown-menu li a {
+    display: block;
+    padding: 10px 15px;
+    color: white;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+/* Hover effect */
+.dropdown-menu li a:hover {
+    background-color: #2982ff;
+    color: white;
+}
+
+
+/* ========================= */
+/* SECOND-LEVEL DROPDOWN     */
+/* ========================= */
+
+.dropdown-menu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    background-color: #091848
+}
+
+/* Show second-level dropdown */
+.dropdown-menu .dropdown:hover > .dropdown-menu {
+    display: block;
+}
+
+/* index.html */
+
+index.html {
+    background-color: #e4ece0
+}
+
+.MapFlex {
+    display: flex;
+    justify-content: center;
+    align-items: center;   
+}
+
+.OMap {
+    height: 90vh;
+    width:  68.5vw;
+}
+
+.MapSpacer {
+    height: 90vh;
+    width: 3vw;
+    background-color: #e4ece0;
+}
+
+.MapList {
+    height: 90vh;
+    width:  28.5vw;
+}
