@@ -1,6 +1,6 @@
 import csv
 
-from dataloader import Load_CSV
+from dataloader import Load_CSV, Full_Load_CSV
 import configs as cfg
 import utils as u
 
@@ -18,7 +18,20 @@ def CRN(val):
         return None
 #TODO Refactor for Load_CSV()
 def Location(val, rooms=Load_CSV()):
-    L_dict = {}
+    # L_dict = {}
+    # for row in rooms: 
+    #     if (row.location).lower()[:len(val)] == val.lower():
+    #         if (row.location)[-5].isnumeric():
+    #             if (row.location)[-4:] == " ": v = 3
+    #             else: v = 5
+    #         elif (row.location)[-4] == " ": v = 3
+    #         else: v = 4
+    #         if (row.location)[-v:] not in L_dict:
+    #             L_dict[(row.location)[-v:]] = 1
+    #         else:
+    #             L_dict[(row.location)[-v:]] += 1                
+    # return L_dict
+    L_dict = []
     for row in rooms: 
         if (row.location).lower()[:len(val)] == val.lower():
             if (row.location)[-5].isnumeric():
@@ -27,9 +40,9 @@ def Location(val, rooms=Load_CSV()):
             elif (row.location)[-4] == " ": v = 3
             else: v = 4
             if (row.location)[-v:] not in L_dict:
-                L_dict[(row.location)[-v:]] = 1
+                L_dict.append(row)
             else:
-                L_dict[(row.location)[-v:]] += 1                
+                L_dict.append(row)               
     return L_dict
 
 def Time(t, d):
@@ -125,9 +138,44 @@ def Time(t, d):
 
 #     # return u.clean_dict(used_rooms), u.clean_dict(unused_rooms)
 
+def ID_room(R, rooms=Load_CSV()):
+    R = str(R)
+    for room in rooms:
+        if R in room.location:
+            return room
+
+def Instructor(N, full=False):
+    #TODO Account for same names (ie. Valdez is in SPAN & CPEN)
+    if full: 
+        courses = Full_Load_CSV()
+    else: 
+        courses = Load_CSV()
+    N = N.split(" ")
+    Ilist = []
+    for row in courses:
+        if row.instructor == [] or row.instructor == None or row.instructor == '': continue
+        I  = (row.instructor).split(", ")
+        if ";" in I[1]:
+            S = I[1].split("; ")
+            for s in S:
+                I.append(s)
+            I.remove(I[1])
+        if len(N) == 1:
+            if N[0].capitalize() in I: 
+                Ilist.append(row)
+        elif N[0].capitalize() in I and N[1].capitalize() in I:
+            print(I)
+            Ilist.append(row)
+    return Ilist
+
+
+
 if __name__ == "__main__":
-    used = Time(1000, "W")[0]
-    for room in used:
-        # print(room.location)
-        pass
-    print(Location('SERC', used))
+    # used = Time(1930, "T")[0]
+    # for room in used:
+    #     # print(room.location)
+    #     pass
+    # print(ID_room(3387, Location('SERC', used)).row)
+
+    for row in Instructor("kreider"):
+        print(row.row)
