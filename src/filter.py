@@ -1,6 +1,6 @@
 import csv
 
-from dataloader import Load_CSV, Full_Load_CSV
+# from dataloader import Load_CSV, Full_Load_CSV
 import configs as cfg
 import utils as u
 
@@ -12,12 +12,12 @@ def search_by():
         i += 1
 
 def CRN(val):
-        for row in Load_CSV():
+        for row in cfg.COURSES:
             if row.CRN == str(val):
                 return row
         return None
 #TODO Refactor for Load_CSV()
-def Location(val, rooms=Load_CSV()):
+def Location(val, rooms=cfg.COURSES):
     # L_dict = {}
     # for row in rooms: 
     #     if (row.location).lower()[:len(val)] == val.lower():
@@ -47,7 +47,7 @@ def Location(val, rooms=Load_CSV()):
 
 def Time(t, d):
     t = int(t)
-    courses = Load_CSV()
+    courses = cfg.COURSES
 
     used = []
     unused = []
@@ -138,33 +138,39 @@ def Time(t, d):
 
 #     # return u.clean_dict(used_rooms), u.clean_dict(unused_rooms)
 
-def ID_room(R, rooms=Load_CSV()):
+def ID_room(R, rooms=cfg.COURSES):
     R = str(R)
     for room in rooms:
         if R in room.location:
             return room
 
 def Instructor(N, full=False):
-    #TODO Account for same names (ie. Valdez is in SPAN & CPEN)
     if full: 
-        courses = Full_Load_CSV()
+        courses = cfg.FULL_COURSES
     else: 
-        courses = Load_CSV()
+        courses = cfg.COURSES
     N = N.split(" ")
     Ilist = []
     for row in courses:
-        if row.instructor == [] or row.instructor == None or row.instructor == '': continue
-        I  = (row.instructor).split(", ")
-        if ";" in I[1]:
-            S = I[1].split("; ")
-            for s in S:
-                I.append(s)
-            I.remove(I[1])
+        I = row.instructor
+        if I == [] or I == None or I == '': continue
+        if '; ' in I:
+            I = I.split('; ')
+            c = 0
+            for i in I:
+                print(I, i)
+                I[c] = i.split(', ')
+                c += 1
+            for _ in range(len(I)):
+                I.append(I[0][0])
+                I.append(I[0][1])
+                I.remove(I[0])
+        else: 
+            I = I.split(', ')
         if len(N) == 1:
             if N[0].capitalize() in I: 
                 Ilist.append(row)
         elif N[0].capitalize() in I and N[1].capitalize() in I:
-            print(I)
             Ilist.append(row)
     return Ilist
 
@@ -177,5 +183,5 @@ if __name__ == "__main__":
     #     pass
     # print(ID_room(3387, Location('SERC', used)).row)
 
-    for row in Instructor("kreider"):
+    for row in Instructor("Burket"):
         print(row.row)
