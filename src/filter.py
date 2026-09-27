@@ -174,6 +174,14 @@ def Instructor(N, full=False):
             Ilist.append(row)
     return Ilist
 
+def Course(C):
+    courses = cfg.COURSES
+    cList = []
+    for course in courses:
+        if (course.course).lower() == C.lower():
+            cList.append(course)
+    return cList
+
 
 
 if __name__ == "__main__":
@@ -183,5 +191,5 @@ if __name__ == "__main__":
     #     pass
     # print(ID_room(3387, Location('SERC', used)).row)
 
-    for row in Instructor("Burket"):
-        print(row.row)
+    for row in Course(""):
+        print(f'{row.course} : {row.instructor}')
