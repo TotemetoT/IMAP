@@ -1,6 +1,6 @@
 import csv
 
-from dataloader import Load_CSV
+# from dataloader import Load_CSV, Full_Load_CSV
 import configs as cfg
 import utils as u
 
@@ -12,13 +12,26 @@ def search_by():
         i += 1
 
 def CRN(val):
-        for row in Load_CSV():
+        for row in cfg.COURSES:
             if row.CRN == str(val):
                 return row
         return None
 #TODO Refactor for Load_CSV()
-def Location(val, rooms=Load_CSV()):
-    L_dict = {}
+def Location(val, rooms=cfg.COURSES):
+    # L_dict = {}
+    # for row in rooms: 
+    #     if (row.location).lower()[:len(val)] == val.lower():
+    #         if (row.location)[-5].isnumeric():
+    #             if (row.location)[-4:] == " ": v = 3
+    #             else: v = 5
+    #         elif (row.location)[-4] == " ": v = 3
+    #         else: v = 4
+    #         if (row.location)[-v:] not in L_dict:
+    #             L_dict[(row.location)[-v:]] = 1
+    #         else:
+    #             L_dict[(row.location)[-v:]] += 1                
+    # return L_dict
+    L_dict = []
     for row in rooms: 
         if (row.location).lower()[:len(val)] == val.lower():
             if (row.location)[-5].isnumeric():
@@ -27,14 +40,14 @@ def Location(val, rooms=Load_CSV()):
             elif (row.location)[-4] == " ": v = 3
             else: v = 4
             if (row.location)[-v:] not in L_dict:
-                L_dict[(row.location)[-v:]] = 1
+                L_dict.append(row)
             else:
-                L_dict[(row.location)[-v:]] += 1                
+                L_dict.append(row)               
     return L_dict
 
 def Time(t, d):
     t = int(t)
-    courses = Load_CSV()
+    courses = cfg.COURSES
 
     used = []
     unused = []
@@ -125,9 +138,56 @@ def Time(t, d):
 
 #     # return u.clean_dict(used_rooms), u.clean_dict(unused_rooms)
 
+def ID_room(R, rooms=cfg.COURSES):
+    R = str(R)
+    for room in rooms:
+        if R in room.location:
+            return room
+
+def Instructor(N, full=False):
+    if full: 
+        courses = cfg.FULL_COURSES
+    else: 
+        courses = cfg.COURSES
+    N = N.split(" ")
+    Ilist = []
+    for row in courses:
+        I = row.instructor
+        if I == [] or I == None or I == '': continue
+        if '; ' in I:
+            I = I.split('; ')
+            c = 0
+            for i in I:
+                print(I, i)
+                I[c] = i.split(', ')
+                c += 1
+            for _ in range(len(I)):
+                I.append(I[0][0])
+                I.append(I[0][1])
+                I.remove(I[0])
+        else: 
+            I = I.split(', ')
+        if len(N) == 1:
+            if N[0].capitalize() in I: 
+                Ilist.append(row)
+        elif N[0].capitalize() in I and N[1].capitalize() in I:
+            Ilist.append(row)
+    return Ilist
+
+def Course(C):
+    courses = cfg.COURSES
+    cList = []
+    for course in courses:
+        if (course.course).lower() == C.lower():
+            cList.append(course)
+    return cList
+
+
+
 if __name__ == "__main__":
-    used = Time(1000, "W")[0]
+    used = Time(1930, "T")[0]
     for room in used:
         # print(room.location)
         pass
-    print(Location('SERC', used))
+    print(ID_room(3387, Location('SERC', used)).row)
+
