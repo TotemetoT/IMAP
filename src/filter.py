@@ -72,6 +72,51 @@ def Time(t, d):
 
     return used, unused
 
+def RoomTimes(room, d):
+    """
+    Return all class times for a specific room on a specific day.
+    """
+
+    courses = cfg.COURSES
+    times = []
+
+    for course in courses:
+
+        # Split locations in case a course has multiple rooms
+        locations = [x.strip() for x in course.location.split(";")]
+
+        # Check whether this course uses the selected room
+        room_matches = False
+
+        for location in locations:
+            if room in location:
+                room_matches = True
+                break
+
+        if not room_matches:
+            continue
+
+        # Check whether the course occurs on this day
+        if d not in course.days:
+            continue
+
+        # Get all time ranges for this course
+        time_ranges = [
+            x.strip()
+            for x in course.time.split(";")
+        ]
+
+        for time_range in time_ranges:
+
+            start, end = time_range.split("-")
+
+            times.append({
+                "start": start,
+                "end": end
+            })
+
+    return times
+
 # def Time(t, d):
 #     t = int(t)
 #     courses = Load_CSV()
@@ -185,9 +230,5 @@ def Course(C):
 
 
 if __name__ == "__main__":
-    used = Time(1930, "T")[0]
-    for room in used:
-        # print(room.location)
-        pass
-    print(ID_room(3387, Location('SERC', used)).row)
+    print(RoomTimes("TFAC 102", "T"))
 
