@@ -60,6 +60,8 @@
             margin: 0;
             color: #666;
             line-height: 1.5;
+
+            overflow-y: scroll;
         }
 
         /*
@@ -69,7 +71,6 @@
             position: relative;
             width: 80vw;
             height: 95vh;
-            /* overflow: hidden; */
             max-width: calc(80vw - 20px);
             max-height: calc(95vh - 20px);
         }
@@ -132,39 +133,76 @@
             stroke-width: 3;
         }
 
-
-        /*
-         * TABLET / PHONE
-         *
-         * On smaller screens, put the information
-         * panel above the floorplan.
-         */
+        /* TABLET / PHONE */
         @media (max-width: 700px) {
 
             body {
                 padding: 10px;
+                overflow-y: auto;
             }
 
             .main-layout {
+                display: flex;
                 flex-direction: column;
-                gap: 15px;
+                gap: 10px;
+                width: 100%;
             }
 
+            /* Floor buttons come first */
+            .floor-buttons {
+                order: 1;
+                display: flex;
+                width: 100%;
+                justify-content: center;
+                gap: 5px;
+            }
+
+            /* Map comes second */
+            .floorplan-container {
+                order: 2;
+
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+
+                aspect-ratio: 1 / 1;
+            }
+
+            /* Information comes last */
             .room-info {
+                order: 3;
+
                 width: 100%;
                 min-width: 0;
 
                 position: static;
+
+                padding: 15px;
             }
 
-            .floorplan-container {
-                width: 100%;
-                max-width: 100%;
+            /* Make the floor buttons horizontal on phones */
+            .floor_button {
+                height: 45px;
+                width: auto;
+                flex: 1;
 
-                aspect-ratio: 1 / 1;
+                writing-mode: horizontal-tb;
+                text-orientation: initial;
+            }
+
+            /* Make the floorplan fit the phone width */
+            .floorplan-image {
+                width: 100%;
+                height: auto;
+                padding-right: 0;
+            }
+
+            .room-overlay {
+                width: 100%;
+                height: 100%;
             }
         }
-
+        
         .floor {
             display: none;
         }
@@ -187,7 +225,7 @@
     </style>
 </head>
 
-<body>
+<body data-building="TFAC">
         <!-- NavBar-->
     <nav class="navbar">
         <h1 class="navbar-title">Interactive Map of Campus</h1>
@@ -215,7 +253,7 @@
         </ul>
         <div class="navbar-logo">
             <a href="../../../index.html">
-                <img src="" alt="IMAP Logo">
+                <img src="../../img/Wumpus.png" alt="IMAP Logo">
             </a>
         </div>
     </nav>
@@ -1086,7 +1124,7 @@
         </div>
     </div>
 
-
+<!-- 
     <script>
 
         const rooms = document.querySelectorAll(".room");
@@ -1114,11 +1152,68 @@
                 const name = this.dataset.name;
                 const number = this.dataset.room;
 
-                // Update information panel
+                // Update room name
                 roomName.textContent = name;
 
+                // Show loading message
                 roomDescription.textContent =
-                    "You selected " + number;
+                    "Loading today's schedule...";
+
+                // Ask Python/Flask for this room's schedule
+                fetch("/room-times/" + encodeURIComponent(number))
+
+                    .then(response => {
+
+                        if (!response.ok) {
+                            throw new Error(
+                                "Server returned an error"
+                            );
+                        }
+
+                        return response.json();
+                    })
+
+                    .then(times => {
+
+                        // No classes today
+                        if (times.length === 0) {
+
+                            roomDescription.innerHTML =
+                                "You selected " + number +
+                                "<br><br>" +
+                                "<strong>No classes scheduled today.</strong>";
+
+                            return;
+                        }
+
+                        // Build schedule
+                        let html =
+                            "You selected " + number +
+                            "<br><br>" +
+                            "<strong>Used today:</strong><br>";
+
+                        times.forEach(time => {
+
+                            html +=
+                                time.start +
+                                " - " +
+                                time.end +
+                                "<br>";
+
+                        });
+
+                        roomDescription.innerHTML = html;
+
+                    })
+
+                    .catch(error => {
+
+                        console.error(error);
+
+                        roomDescription.textContent =
+                            "Unable to load room schedule.";
+
+                    });
 
             });
 
@@ -1137,7 +1232,7 @@
                 .classList.add("active");
         }
 
-    </script>
+    </script> -->
 
 </body>
 </html>
