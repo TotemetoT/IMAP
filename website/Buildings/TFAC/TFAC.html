@@ -15,10 +15,10 @@
 
         body {
             margin: 0;
-            padding: 20px;
+            /* padding: 20px; */
             font-family: Arial, sans-serif;
             background: #f3f3f3;
-            overflow:hidde;
+            overflow:hidden;
         }
 
         /*
@@ -71,7 +71,7 @@
             height: 95vh;
             /* overflow: hidden; */
             max-width: calc(80vw - 20px);
-            /* max-height: calc(95vh - 20px); */
+            max-height: calc(95vh - 20px);
         }
 
         /*
@@ -251,7 +251,7 @@
 
             <!-- FLOOR 1 -->
             <div class="floor" id="floor-1">
-                <img src="Floors/TFAC_1.png" class="floorplan-image">
+                <img src="Floors/TFAC_1G.jpg" class="floorplan-image">
                 <svg
                     class="room-overlay"
                     viewBox="0 0 1000 1000"
@@ -459,8 +459,8 @@
             </div>
 
             <!-- FLOOR 2 -->
-            <div class="floor active" id="floor-2">
-                <img src="Floors/TFAC_2.png" class="floorplan-image">
+            <div class="floor" id="floor-2">
+                <img src="Floors/TFAC_2G.jpg" class="floorplan-image">
 
                 <svg 
                     class="room-overlay"
@@ -783,15 +783,303 @@
             </div>
 
             <!-- FLOOR 3 -->
-            <div class="floor" id="floor-3">
-                <img src="Floors/TFAC_3.png" class="floorplan-image">
+            <div class="active floor" id="floor-3">
+                <img src="Floors/TFAC_3G.jpg" class="floorplan-image">
 
                 <svg 
                     class="room-overlay"
                     viewBox="0 0 1000 1000"
                     preserveAspectRatio="none"
                 >
-                    <!-- Floor 3 polygons -->
+                    <!-- TFAC 311 -->
+                    <polygon
+                        class="room"
+                        data-room="311"
+                        data-name="TFAC 311"
+                        points="
+                            40,90
+                            86,90
+                            86,79
+                            172,79
+                            172,187
+                            40,187
+                            40,175
+                            35,175
+                            35,135
+                            40,135
+                        "
+                    />
+
+                    <!-- TFAC 312 -->
+                    <polygon
+                        class="room"
+                        data-room="312"
+                        data-name="TFAC 312"
+                        points="
+                            34,189
+                            105,189
+                            105,234
+                            83,234
+                            83,255
+                            34,255
+                        "
+                    />
+
+                    <!-- TFAC 313 -->
+                    <polygon
+                        class="room"
+                        data-room="313"
+                        data-name="TFAC 313"
+                        points="
+                            34,257
+                            83,257
+                            83,285
+                            105,285
+                            105,323
+                            40,323
+                            40,280
+                            34,280
+                        "
+                    />
+
+                    <!-- TFAC 315 -->
+                    <polygon
+                        class="room"
+                        data-room="315"
+                        data-name="TFAC 315"
+                        points="
+                            40,329
+                            105,329
+                            105,433
+                            40,433
+                        "
+                    />
+
+                    <!-- TFAC 317 -->
+                    <polygon
+                        class="room"
+                        data-room="317"
+                        data-name="TFAC 317"
+                        points="
+                            40,438
+                            105,438
+                            105,535
+                            82,535
+                            82,545
+                            40,545
+                        "
+                    />
+                    
+                    <!-- TFAC 319 -->
+                    <polygon
+                        class="room"
+                        data-room="319"
+                        data-name="TFAC 319"
+                        points="
+                            40,550
+                            82,550
+                            82,558
+                            105,558
+                            105,619
+                            75,619
+                            75,600
+                            40,600
+                        "
+                    />
+
+                    <!-- TFAC 320 -->
+                    <polygon
+                        class="room"
+                        data-room="320"
+                        data-name="TFAC 320"
+                        points="
+                            40,605
+                            72,605
+                            72,624
+                            105,624
+                            105,670
+                            40,670
+                        "
+                    />
+
+                    <!-- TFAC 321 -->
+                    <polygon
+                        class="room"
+                        data-room="321"
+                        data-name="TFAC 321"
+                        points="
+                            40,675
+                            105,675
+                            105,731
+                            40,731
+                        "
+                    />
+
+                    <!-- TFAC 323 -->
+                    <polygon
+                        class="room"
+                        data-room="323"
+                        data-name="TFAC 323"
+                        points="
+                            35,735
+                            105,735
+                            105,762
+                            88,762
+                            88,782
+                            35,782  
+                        "
+                    />
+
+                    <!-- TFAC 325 -->
+                    <polygon
+                        class="room"
+                        data-room="325"
+                        data-name="TFAC 325"
+                        points="
+                            92,826
+                            106,826
+                            106,838
+                            285,838
+                            285,930
+                            92,930
+                        "
+                    />
+
+                    <!-- TFAC 318 -->
+                    <polygon
+                        class="room"
+                        data-room="318"
+                        data-name="TFAC 318"
+                        points="
+                            208,345
+                            263,345
+                            263,660
+                            152,660
+                            152,395
+                            208,395
+                        "
+                    />
+
+                    <!-- TFAC 318 Storage -->
+                    <polygon
+                        class="room"
+                        data-room="318 Storage"
+                        data-name="TFAC 318 Storage"
+                        points="
+                            228,665
+                            263,665
+                            263,720
+                            269,720
+                            269,737
+                            284,737
+                            284,785
+                            218,785
+                            218,720
+                            228,720
+                        "
+                    />
+
+                    <!-- TFAC Copier -->
+                    <polygon
+                        class="room"
+                        data-room="Copier"
+                        data-name="TFAC Copier"
+                        points="
+                            178,78
+                            218,78
+                            218,190
+                            178,190
+                        "
+                    />
+
+                    <!-- TFAC 308 -->
+                    <polygon
+                        class="room"
+                        data-room="308"
+                        data-name="TFAC 308"
+                        points="
+                            221,85
+                            300,85
+                            300,140
+                            269,140
+                            269,190
+                            221,190
+                        "
+                    />
+
+                    <!-- TFAC 307 -->
+                    <polygon
+                        class="room"
+                        data-room="307"
+                        data-name="TFAC 307"
+                        points="
+                            302,85
+                            355,85
+                            355,190
+                            273,190
+                            273,144
+                            302,144
+                        "
+                    />
+
+                    <!-- TFAC 303 -->
+                    <polygon
+                        class="room"
+                        data-room="303"
+                        data-name="TFAC 303"
+                        points="
+                            510,77
+                            597,77
+                            597,84
+                            605,84
+                            605,150
+                            539,150
+                            539,188
+                            510,188
+                        "
+                    />
+
+                    <!-- TFAC ___ -->
+                    <polygon
+                        class="room"
+                        data-room="___"
+                        data-name="TFAC ___"
+                        points="
+                            143,238
+                            332,237
+                            332,340
+                            143,340
+                        "
+                    />
+
+                    <!-- TFAC 304 -->
+                    <polygon
+                        class="room"
+                        data-room="304"
+                        data-name="TFAC 304"
+                        points="
+                            336,238
+                            550,238
+                            550,382
+                            460,382
+                            460,340
+                            336,340
+                        "
+                    />
+
+                    <!-- TFAC 301 -->
+                    <polygon
+                        class="room"
+                        data-room="301"
+                        data-name="TFAC 301"
+                        points="
+                            553,237
+                            605,237
+                            605,382
+                            553,382
+                        "
+                    />
+
                 </svg>
             </div>
 

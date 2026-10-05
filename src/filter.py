@@ -185,11 +185,9 @@ def Course(C):
 
 
 if __name__ == "__main__":
-    # used = Time(1930, "T")[0]
-    # for room in used:
-    #     # print(room.location)
-    #     pass
-    # print(ID_room(3387, Location('SERC', used)).row)
+    used = Time(1930, "T")[0]
+    for room in used:
+        # print(room.location)
+        pass
+    print(ID_room(3387, Location('SERC', used)).row)
 
-    for row in Course(""):
-        print(f'{row.course} : {row.instructor}')
