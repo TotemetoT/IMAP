@@ -1328,7 +1328,7 @@ function updateRoomInformation(room) {
                 ) {
 
                     line +=
-                        ` — ${time.title}`;
+                        ` - ${time.title}`;
 
                 }
 
