@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMap: TFAC</title>
+    <title>IMap: LUTR</title>
 
     <link rel="stylesheet" href="../../style.css">
     <script src="../../script.js"></script>
+
+    <!-- <script>alert("Please Note:\n\nSome rooms may be labeled differently then they appear");</script> -->
 
     <style>
         * {
@@ -222,6 +224,24 @@
             align-items: center;
         }
 
+        /* Delete this later */
+        #mouse-coordinates {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            background: #003366;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+
     </style>
 </head>
 
@@ -265,6 +285,13 @@
         -->
         <div class="room-info">
 
+            <!-- Delete this later -->
+            <div id="mouse-coordinates">
+                X: <span id="mouse-x">---</span>
+                &nbsp;|&nbsp;
+                Y: <span id="mouse-y">---</span>
+            </div>
+
             <h2 id="room-name">
                 Select a room
             </h2>
@@ -296,13 +323,841 @@
                     preserveAspectRatio="none"
                 >
 
-                    <!-- TFAC 124A -->
+                    <!-- LUTR 105 -->
                     <polygon
                         class="room"
-                        data-room="124A"
-                        data-name="TFAC 124A"
+                        data-room="105"
+                        data-name="LUTR 105"
                         points="
+                            30,255
+                            100,255
+                            100,417
+                            30,417
+                        "
+                    />
 
+                    <!-- LUTR 109 -->
+                    <polygon
+                        class="room"
+                        data-room="109"
+                        data-name="LUTR 109"
+                        points="
+                            30,420
+                            100,420
+                            100,563
+                            30,563
+                        "
+                    />
+
+                    <!-- LUTR 111 -->
+                    <polygon
+                        class="room"
+                        data-room="111"
+                        data-name="LUTR 111"
+                        points="
+                            30,565
+                            100,565
+                            100,645
+                            30,645
+                        "
+                    />
+
+                    <!-- LUTR 113 -->
+                    <polygon
+                        class="room"
+                        data-room="113"
+                        data-name="LUTR 113"
+                        points="
+                            30,650
+                            100,650
+                            100,765
+                            75,765
+                            75,816
+                            30,816
+                        "
+                    />
+
+                    <!-- LUTR 114A -->
+                    <polygon
+                        class="room"
+                        data-room="114A"
+                        data-name="LUTR 114A"
+                        points="
+                            30,818
+                            63,818
+                            63,880
+                            30,880
+                        "
+                    />
+
+                    <!-- LUTR 114 -->
+                    <polygon
+                        class="room"
+                        data-room="114"
+                        data-name="LUTR 114"
+                        points="
+                            64,817
+                            98,817
+                            98,880
+                            64,880
+                        "
+                    />
+
+                    <!-- LUTR 115 -->
+                    <polygon
+                        class="room"
+                        data-room="115"
+                        data-name="LUTR 115"
+                        points="
+                            99,825
+                            128,825
+                            128,880
+                            99,880
+                        "
+                    />
+
+                    <!-- LUTR 116 -->
+                    <polygon
+                        class="room"
+                        data-room="116"
+                        data-name="LUTR 116"
+                        points="
+                            129,817
+                            150,817
+                            150,880
+                            129,880
+                        "
+                    />
+
+                    <!-- LUTR 118 -->
+                    <polygon
+                        class="room"
+                        data-room="118"
+                        data-name="LUTR 118"
+                        points="
+                            152,817
+                            171,817
+                            171,880
+                            152,880
+                        "
+                    />
+
+                    <!-- LUTR 119 -->
+                    <polygon
+                        class="room"
+                        data-room="119"
+                        data-name="LUTR 119"
+                        points="
+                            173,817
+                            192,817
+                            192,880
+                            173,880
+
+                        "
+                    />
+
+                    <!-- LUTR 120 -->
+                    <polygon
+                        class="room"
+                        data-room="120"
+                        data-name="LUTR 120"
+                        points="
+                            195,817
+                            215,817
+                            215,880
+                            195,880
+
+                        "
+                    />
+
+                    <!-- LUTR 102 -->
+                    <polygon
+                        class="room"
+                        data-room="102"
+                        data-name="LUTR 102"
+                        points="
+                            124,257
+                            151,257
+                            151,301
+                            124,301
+                        "
+                    />
+
+                    <!-- LUTR 103 -->
+                    <polygon
+                        class="room"
+                        data-room="103"
+                        data-name="LUTR 103"
+                        points="
+                            124,306
+                            151,306
+                            151,347
+                            124,347
+                        "
+                    />
+
+                    <!-- LUTR 104 -->
+                    <polygon
+                        class="room"
+                        data-room="104"
+                        data-name="LUTR 104"
+                        points="
+                            124,352
+                            151,352
+                            151,400
+                            124,400
+                        "
+                    />
+
+                    <!-- LUTR 105 -->
+                    <polygon
+                        class="room"
+                        data-room="105"
+                        data-name="LUTR 105"
+                        points="
+                            124,404
+                            151,404
+                            151,448
+                            124,448
+                        "
+                    />
+
+                    <!-- LUTR 106 -->
+                    <polygon
+                        class="room"
+                        data-room="106"
+                        data-name="LUTR 106"
+                        points="
+                            124,453
+                            151,453
+                            151,498
+                            124,498
+                        "
+                    />
+
+                    <!-- LUTR 121 -->
+                    <polygon
+                        class="room"
+                        data-room="121"
+                        data-name="LUTR 121"
+                        points="
+                            217,447
+                            347,447
+                            347,683
+                            217,683
+                        "
+                    />
+
+                    <!-- LUTR 123 -->
+                    <polygon
+                        class="room"
+                        data-room="123"
+                        data-name="LUTR 123"
+                        points="
+                            348,618
+                            412,618
+                            412,626
+                            451,626
+                            451,753
+                            348,753
+                        "
+                    />
+
+                    <!-- LUTR 131 -->
+                    <polygon
+                        class="room"
+                        data-room="131"
+                        data-name="LUTR 131"
+                        points="
+                            413,552
+                            479,552
+                            479,615
+                            413,615
+                        "
+                    />
+
+                    <!-- LUTR 137 -->
+                    <polygon
+                        class="room"
+                        data-room="137"
+                        data-name="LUTR 137"
+                        points="
+                            413,403
+                            479,403
+                            479,549
+                            413,549
+                        "
+                    />
+
+                    <!-- LUTR 139 -->
+                    <polygon
+                        class="room"
+                        data-room="139"
+                        data-name="LUTR 139"
+                        points="
+                            413,254
+                            479,254
+                            479,399
+                            413,399
+                        "
+                    />
+
+                    <!-- LUTR 142 -->
+                    <polygon
+                        class="room"
+                        data-room="142"
+                        data-name="LUTR 142"
+                        points="
+                            496,33
+                            496,188
+                            481,188
+                            473,207
+                            415,207
+                            416,40
+                            438,40
+                            438,33
+                        "
+                    />
+
+                    <!-- LUTR 141 -->
+                    <polygon
+                        class="room"
+                        data-room="141"
+                        data-name="LUTR 141"
+                        points="
+                            504,257
+                            531,257
+                            531,300
+                            504,300
+                        "
+                    />
+
+                    <!-- LUTR 140 -->
+                    <polygon
+                        class="room"
+                        data-room="140"
+                        data-name="LUTR 140"
+                        points="
+                            504,304
+                            531,304
+                            531,347
+                            504,347
+                        "
+                    />
+
+                    <!-- LUTR 138 -->
+                    <polygon
+                        class="room"
+                        data-room="138"
+                        data-name="LUTR 138"
+                        points="
+                            504,352
+                            531,352
+                            531,397
+                            504,397
+                        "
+                    />
+
+                    <!-- LUTR 136 -->
+                    <polygon
+                        class="room"
+                        data-room="136"
+                        data-name="LUTR 136"
+                        points="
+                            504,403
+                            531,403
+                            531,445
+                            504,445
+                        "
+                    />
+
+                    <!-- LUTR 135 -->
+                    <polygon
+                        class="room"
+                        data-room="135"
+                        data-name="LUTR 135"
+                        points="
+                            504,450
+                            531,450
+                            531,494
+                            504,494
+                        "
+                    />
+
+                    <!-- LUTR 135 -->
+                    <polygon
+                        class="room"
+                        data-room="135"
+                        data-name="LUTR 135"
+                        points="
+                            504,500
+                            531,500
+                            531,547
+                            504,547
+                        "
+                    />
+
+                    <!-- LUTR 133 -->
+                    <polygon
+                        class="room"
+                        data-room="133"
+                        data-name="LUTR 133"
+                        points="
+                            504,553
+                            531,553
+                            531,592
+                            504,592
+                        "
+                    />
+
+                    <!-- LUTR 122A -->
+                    <polygon
+                        class="room"
+                        data-room="122A"
+                        data-name="LUTR 122A"
+                        points="
+                            350,817
+                            369,817
+                            369,877
+                            350,877
+                        "
+                    />
+
+                    <!-- LUTR 133 -->
+                    <polygon
+                        class="room"
+                        data-room="133"
+                        data-name="LUTR 133"
+                        points="
+                            504,553
+                            531,553
+                            531,592
+                            504,592
+                        "
+                    />
+
+                    <!-- LUTR 122 -->
+                    <polygon
+                        class="room"
+                        data-room="122"
+                        data-name="LUTR 122"
+                        points="
+                            371,817
+                            403,817
+                            403,887
+                            371,887
+                        "
+                    />
+
+                    <!-- LUTR 122B -->
+                    <polygon
+                        class="room"
+                        data-room="122B"
+                        data-name="LUTR 122B"
+                        points="
+                            404,817
+                            434,817
+                            434,887
+                            404,887
+                        "
+                    />
+
+                    <!-- LUTR 124 -->
+                    <polygon
+                        class="room"
+                        data-room="124"
+                        data-name="LUTR 124"
+                        points="
+                            437,817
+                            458,817
+                            458,887
+                            437,887
+                        "
+                    />
+
+                    <!-- LUTR 126 -->
+                    <polygon
+                        class="room"
+                        data-room="126"
+                        data-name="LUTR 126"
+                        points="
+                            484,829
+                            500,829
+                            505,818
+                            531,821
+                            531,887
+                            484,887
+                        "
+                    />
+
+                    <!-- LUTR 125 -->
+                    <polygon
+                        class="room"
+                        data-room="125"
+                        data-name="LUTR 125"
+                        points="
+                            459,817
+                            479,817
+                            483,830
+                            483,887
+                            459,887
+                        "
+                    />
+
+                    <!-- LUTR 144A -->
+                    <polygon
+                        class="room"
+                        data-room="144A"
+                        data-name="LUTR 144A"
+                        points="
+                            589,817
+                            612,817
+                            612,887
+                            589,887
+                        "
+                    />
+
+                    <!-- LUTR 144 -->
+                    <polygon
+                        class="room"
+                        data-room="144"
+                        data-name="LUTR 144"
+                        points="
+                            614,817
+                            639,817
+                            639,887
+                            614,887
+                        "
+                    />
+
+                    <!-- LUTR 144B -->
+                    <polygon
+                        class="room"
+                        data-room="144B"
+                        data-name="LUTR 144B"
+                        points="
+                            642,817
+                            662,817
+                            662,887
+                            642,887
+                        "
+                    />
+
+                    <!-- LUTR 145 -->
+                    <polygon
+                        class="room"
+                        data-room="145"
+                        data-name="LUTR 145"
+                        points="
+                            664,817
+                            684,817
+                            684,887
+                            664,887
+                        "
+                    />
+
+                    <!-- LUTR 146 -->
+                    <polygon
+                        class="room"
+                        data-room="146"
+                        data-name="LUTR 146"
+                        points="
+                            686,817
+                            705,817
+                            705,887
+                            686,887
+                        "
+                    />
+
+                    <!-- LUTR 148 -->
+                    <polygon
+                        class="room"
+                        data-room="148"
+                        data-name="LUTR 148"
+                        points="
+                            708,817
+                            727,817
+                            727,887
+                            708,887
+                        "
+                    />
+
+                    <!-- LUTR 149 -->
+                    <polygon
+                        class="room"
+                        data-room="149"
+                        data-name="LUTR 149"
+                        points="
+                            729,817
+                            750,817
+                            750,887
+                            729,887
+                        "
+                    />
+
+                    <!-- LUTR 151 -->
+                    <polygon
+                        class="room"
+                        data-room="151"
+                        data-name="LUTR 151"
+                        points="
+                            782,887
+                            779,832
+                            788,817
+                            816,817
+                            816,887
+                        "
+                    />
+
+                    <!-- LUTR 151A -->
+                    <polygon
+                        class="room"
+                        data-room="151A"
+                        data-name="LUTR 151A"
+                        points="
+                            817,815
+                            846,817
+                            846,887
+                            817,887
+                        "
+                    />
+
+
+                    <!-- LUTR 152 -->
+                    <polygon
+                        class="room"
+                        data-room="152"
+                        data-name="LUTR 152"
+                        points="
+                            793,650
+                            846,650
+                            846,811
+                            810,811
+                            810,762
+                            793,762
+                            793,650
+                        "
+                    />
+
+                    <!-- LUTR 157 -->
+                    <polygon
+                        class="room"
+                        data-room="157"
+                        data-name="LUTR 157"
+                        points="
+                            781,547
+                            845,547
+                            845,648
+                            781,648
+                        "
+                    />
+
+
+                    <!-- LUTR 159 -->
+                    <polygon
+                        class="room"
+                        data-room="159"
+                        data-name="LUTR 159"
+                        points="
+                            782,473
+                            846,473
+                            846,544
+                            782,544
+
+                        "
+                    />
+
+
+                    <!-- LUTR 161A -->
+                    <polygon
+                        class="room"
+                        data-room="161A"
+                        data-name="LUTR 161A"
+                        points="
+                            814,398
+                            846,398
+                            846,469
+                            814,469
+                        "
+                    />
+
+
+                    <!-- LUTR 163 -->
+                    <polygon
+                        class="room"
+                        data-room="163"
+                        data-name="LUTR 163"
+                        points="
+                            780,398
+                            812,398
+                            812,441
+                            780,441
+                        "
+                    />
+
+
+                    <!-- LUTR 165 -->
+                    <polygon
+                        class="room"
+                        data-room="165"
+                        data-name="LUTR 165"
+                        points="
+                            780,352
+                            846,352
+                            846,392
+                            780,392
+                        "
+                    />
+
+
+                    <!-- LUTR 167 -->
+                    <polygon
+                        class="room"
+                        data-room="167"
+                        data-name="LUTR 167"
+                        points="
+                            780,257
+                            846,257
+                            846,347
+                            780,347
+                        "
+                    />
+
+
+                    <!-- LUTR 170 -->
+                    <polygon
+                        class="room"
+                        data-room="170"
+                        data-name="LUTR 170"
+                        points="
+                            762,32
+                            823,32
+                            823,40
+                            846,40
+                            846,207
+                            786,207
+                            778,190
+                            
+                            762,190
+                        "
+                    />
+
+                    <!-- LUTR 169 -->
+                    <polygon
+                        class="room"
+                        data-room="169"
+                        data-name="LUTR 169"
+                        points="
+                            728,256
+                            755,256
+                            755,300
+                            728,300
+                        "
+                    />
+
+                    <!-- LUTR 168 -->
+                    <polygon
+                        class="room"
+                        data-room="168"
+                        data-name="LUTR 168"
+                        points="
+                            728,304
+                            755,304
+                            755,348
+                            728,348
+                        "
+                    />
+
+                    <!-- LUTR 166 -->
+                    <polygon
+                        class="room"
+                        data-room="166"
+                        data-name="LUTR 166"
+                        points="
+                            728,351
+                            755,351
+                            755,398
+                            728,398
+                        "
+                    />
+
+                    <!-- LUTR 164 -->
+                    <polygon
+                        class="room"
+                        data-room="164"
+                        data-name="LUTR 164"
+                        points="
+                            728,402
+                            755,402
+                            755,446
+                            728,446
+                        "
+                    />
+
+                    <!-- LUTR 162 -->
+                    <polygon
+                        class="room"
+                        data-room="162"
+                        data-name="LUTR 162"
+                        points="
+                            728,453
+                            756,453
+                            756,498
+                            728,498
+                        "
+                    />
+
+                    <!-- LUTR 160 -->
+                    <polygon
+                        class="room"
+                        data-room="160"
+                        data-name="LUTR 160"
+                        points="
+                            728,501
+                            755,501
+                            755,546
+                            728,546
+                        "
+                    />
+
+                    <!-- LUTR 159 -->
+                    <polygon
+                        class="room"
+                        data-room="159"
+                        data-name="LUTR 159"
+                        points="
+                            728,552
+                            755,552
+                            755,596
+                            728,596
+                        "
+                    />
+
+                    <!-- LUTR 143A -->
+                    <polygon
+                        class="room"
+                        data-room="143A"
+                        data-name="LUTR 143A"
+                        points="
+                            590,617
+                            639,617
+                            639,714
+                            607,714
+                            607,760
+                            590,760
+                        "
+                    />
+
+                    <!-- LUTR 143B -->
+                    <polygon
+                        class="room"
+                        data-room="143B"
+                        data-name="LUTR 143B"
+                        points="
+                            641,613
+                            674,613
+                            674,760
+                            641,760
                         "
                     />
 

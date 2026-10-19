@@ -31,7 +31,7 @@ def Load_CSV():
 
 def Full_Load_CSV():
     """
-    Loads the CSV without courses that are not in person:
+    Loads the CSV with courses that are not in person:
     ARR, HYB, ASY, etc. 
     
     @return: List of rows of SYN classes"""

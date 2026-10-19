@@ -1522,3 +1522,50 @@ document.addEventListener(
 
     }
 );
+
+// Delete this later
+document.addEventListener("DOMContentLoaded", () => {
+    const coordinateBox = document.getElementById("mouse-coordinates");
+    const xDisplay = document.getElementById("mouse-x");
+    const yDisplay = document.getElementById("mouse-y");
+
+    const overlays = document.querySelectorAll("svg.room-overlay");
+
+    if (!coordinateBox || !xDisplay || !yDisplay) return;
+
+    overlays.forEach(svg => {
+        svg.addEventListener("mousemove", event => {
+            const point = svg.createSVGPoint();
+
+            point.x = event.clientX;
+            point.y = event.clientY;
+
+            // Convert mouse position to SVG viewBox coordinates.
+            const svgPoint = point.matrixTransform(
+                svg.getScreenCTM().inverse()
+            );
+
+            const viewBox = svg.viewBox.baseVal;
+
+            const x = Math.max(
+                viewBox.x,
+                Math.min(viewBox.x + viewBox.width, svgPoint.x)
+            );
+
+            const y = Math.max(
+                viewBox.y,
+                Math.min(viewBox.y + viewBox.height, svgPoint.y)
+            );
+
+            xDisplay.textContent = Math.round(x);
+            yDisplay.textContent = Math.round(y);
+
+            coordinateBox.style.display = "block";
+        });
+
+        svg.addEventListener("mouseleave", () => {
+            xDisplay.textContent = "---";
+            yDisplay.textContent = "---";
+        });
+    });
+});
