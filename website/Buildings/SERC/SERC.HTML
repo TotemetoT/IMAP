@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMap: SERC</title>
+
+    <link rel="stylesheet" href="../../style.css">
+    <script type="module" src="../../script.js"></script>
+
+    <!-- <script>alert("Please Note:\n\nSome rooms may be labeled differently then they appear");</script> -->
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            /* padding: 20px; */
+            font-family: Arial, sans-serif;
+            background: #f3f3f3;
+            overflow-x:scroll;
+        }
+
+        /*
+         * Main layout
+         *
+         * Information = roughly 20vw
+         * Floorplan   = roughly 80vw
+         */
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            /* gap: 20px; */
+            width: 100%;
+        }
+
+        /*
+         * Information panel
+         */
+        .room-info {
+            width: 20vw;
+            min-width: 220px;
+
+            padding: 20px;
+
+            background: white;
+            border-radius: 8px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+            position: sticky;
+            top: 20px;
+        }
+
+        .room-info h2 {
+            margin: 0 0 10px;
+        }
+
+        .room-info p {
+            margin: 0;
+            color: #666;
+            line-height: 1.5;
+
+            overflow-y: scroll;
+        }
+
+        /*
+         * Floorplan area
+         */
+        .floorplan-container {
+            position: relative;
+            width: 80vw;
+            height: 95vh;
+            max-width: calc(80vw - 20px);
+            max-height: calc(95vh - 20px);
+        }
+
+        /*
+         * Actual floorplan image
+         */
+        .floorplan-image {
+            display: block;
+
+            width: 80vw;
+            height: 95vh;
+            aspect-ratio: 1/1;
+            padding-right: 10vw;
+
+            /*
+             * Keeps the image square.
+             *
+             * Change this to "contain" if your source image
+             * isn't actually square and you don't want it cropped.
+             */
+        }
+
+        /*
+         * SVG sits exactly on top of the floorplan.
+         */
+        .room-overlay {
+            position: absolute;
+
+            top: 0;
+            left: 0;
+
+            width: 80vw;
+            height: 95vh;
+        }
+
+        /*
+         * Individual rooms
+         */
+        .room {
+            fill: rgba(0, 120, 255, 0.20);
+            stroke: rgba(0, 120, 255, 0.8);
+            stroke-width: 2;
+
+            cursor: pointer;
+
+            transition:
+                fill 0.15s ease,
+                stroke 0.15s ease;
+        }
+
+        .room:hover {
+            fill: rgba(0, 120, 255, 0.45);
+            stroke: #0066cc;
+        }
+
+        .room.selected {
+            fill: rgba(255, 170, 0, 0.50);
+            stroke: #ff9900;
+            stroke-width: 3;
+        }
+
+        /* TABLET / PHONE */
+        @media (max-width: 700px) {
+
+            body {
+                padding: 10px;
+                overflow-y: auto;
+            }
+
+            .main-layout {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
+            /* Floor buttons come first */
+            .floor-buttons {
+                order: 1;
+                display: flex;
+                width: 100%;
+                justify-content: center;
+                gap: 5px;
+            }
+
+            /* Map comes second */
+            .floorplan-container {
+                order: 2;
+
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+
+                aspect-ratio: 1 / 1;
+            }
+
+            /* Information comes last */
+            .room-info {
+                order: 3;
+
+                width: 100%;
+                min-width: 0;
+
+                position: static;
+
+                padding: 15px;
+            }
+
+            /* Make the floor buttons horizontal on phones */
+            .floor_button {
+                height: 45px;
+                width: auto;
+                flex: 1;
+
+                writing-mode: horizontal-tb;
+                text-orientation: initial;
+            }
+
+            /* Make the floorplan fit the phone width */
+            .floorplan-image {
+                width: 100%;
+                height: auto;
+                padding-right: 0;
+            }
+
+            .room-overlay {
+                width: 100%;
+                height: 100%;
+            }
+        }
+        
+        .floor {
+            display: none;
+        }
+
+        .floor.active {
+            display: block;
+        }
+
+        .floor_button {
+            height: 30vh;
+            width: 2vw;
+            padding: 0;
+            writing-mode: vertical-lr;
+            text-orientation: upright;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Delete this later */
+        #mouse-coordinates {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            background: #003366;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+
+    </style>
+</head>
+
+<body data-building="LUTR">
+        <!-- NavBar-->
+    <nav class="navbar">
+        <h1 class="navbar-title">Interactive Map of Campus</h1>
+
+        <ul class="navbar-links">
+            <li class="dropdown">
+                <a href="#"><button class="menu-btn">&#9776;</button></a>
+                <ul class="dropdown-menu">
+                    <li><a href="../../../index.html">Home</a></li>
+                    <li class="dropdown"><a href="#">Buildings</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="../TFAC/TFAC.html">(TFAC) Torggler Fine Arts Center</a></li>
+                            <li><a href="../FORBES/FORBES.HTML">(FORBES) Forbes</a></li>
+                            <li><a href="../LUTR/LUTR.HTML">(LUTR) Luter</a></li>
+                            <li><a href="../MCM/MCM.HTML">(MCM) McMurran</a></li>
+                            <li><a href="../FERG/FERG.HTML">(FERG) Ferguson</a></li>
+                            <li><a href="../SERC/SERC.HTML">(SERC) Science and Engineering Recearch Center</a></li>
+                            <li><a href="../TRIB/TRIB.HTML">(TRIB) Trible Library</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#">Search</a></li>
+                    <li><a href="#">About</a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-logo">
+            <a href="../../../index.html">
+                <img src="../../img/Wumpus.png" alt="IMAP Logo">
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-layout">
+
+        <!--
+            INFORMATION PANEL
+        -->
+        <div class="room-info">
+            <h2 id="room-name">
+                Select a room
+            </h2>
+
+            <p id="room-description">
+                Click a room on the floorplan.
+            </p>
+
+        </div>
+
+
+        <!--
+            FLOORPLAN
+        -->
+        <div class="floor-buttons">
+            <button class="floor_button", onclick="showFloor(1)">Floor 1</button>
+            <button class="floor_button", onclick="showFloor(2)">Floor 2</button>
+            <button class="floor_button", onclick="showFloor(3)">Floor 3</button>
+        </div>
+
+        <div class="floorplan-container">
+
+            <!-- FLOOR 1 -->
+            <div class="active floor" id="floor-1">
+                <img src="Floors/SERC_1.png" class="floorplan-image">
+                <svg
+                    class="room-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                >
+
+                    <!-- SERC 1174 -->
+                    <polygon
+                        class="room"
+                        data-room="1174"
+                        data-name="SERC 1174"
+                        points="
+                            14,525
+                            132,525
+                            132,702
+                            14,702
+                        "
+                    />
+
+                    <!-- SERC 1175 -->
+                    <polygon
+                        class="room"
+                        data-room="1175"
+                        data-name="SERC 1175"
+                        points="
+                            14,238
+                            132,238
+                            132,421
+                            14,421
+                        "
+                    />
+
+                    <!-- SERC 1175C -->
+                    <polygon
+                        class="room"
+                        data-room="1175C"
+                        data-name="SERC 1175C"
+                        points="
+                            14,428
+                            46,428
+                            46,517
+                            14,517
+                        "
+                    />
+
+                    <!-- SERC 1175B -->
+                    <polygon
+                        class="room"
+                        data-room="1175B"
+                        data-name="SERC 1175B"
+                        points="
+                            50,428
+                            100,428
+                            100,517
+                            50,517
+                        "
+                    />
+
+                    <!-- SERC 1176 -->
+                    <polygon
+                        class="room"
+                        data-room="1176"
+                        data-name="SERC 1176"
+                        points="
+                            14,96
+                            100,96
+                            100,230
+                            14,230
+                        "
+                    />
+
+                    <!-- SERC 1176B -->
+                    <polygon
+                        class="room"
+                        data-room="1176B"
+                        data-name="SERC 1176B"
+                        points="
+                            14,29
+                            56,29
+                            56,90
+                            14,90
+                        "
+                    />
+
+                    <!-- SERC 1176A -->
+                    <polygon
+                        class="room"
+                        data-room="1176A"
+                        data-name="SERC 1176A"
+                        points="
+                            60,29
+                            100,29
+                            100,90
+                            60,90
+                        "
+                    />
+
+                    <!-- SERC 1177 -->
+                    <polygon
+                        class="room"
+                        data-room="1177"
+                        data-name="SERC 1177"
+                        points="
+                            106,28
+                            215,28
+                            215,182
+                            106,182
+                        "
+                    />
+
+                    <!-- SERC 1181 -->
+                    <polygon
+                        class="room"
+                        data-room="1181"
+                        data-name="SERC 1181"
+                        points="
+                            332,371
+                            548,371
+                            548,593
+                            502,593
+                            502,611
+                            377,611
+                            377,593
+                            332,593
+                        "
+                    />
+
+                    <!-- SERC 1184 -->
+                    <polygon
+                        class="room"
+                        data-room="1184"
+                        data-name="SERC 1184"
+                        points="
+                            565,103
+                            618,103
+                            618,229
+                            565,229
+                        "
+                    />
+
+                    <!-- SERC 1185 -->
+                    <polygon
+                        class="room"
+                        data-room="1185"
+                        data-name="SERC 1185"
+                        points="
+                            622,103
+                            661,103
+                            661,229
+                            622,229
+                        "
+                    />
+
+                    <!-- SERC 1187 -->
+                    <polygon
+                        class="room"
+                        data-room="1187"
+                        data-name="SERC 1187"
+                        points="
+                            665,30
+                            813,30
+                            813,174
+                            665,174
+                        "
+                    />
+
+                    <!-- SERC 1187A -->
+                    <polygon
+                        class="room"
+                        data-room="1187A"
+                        data-name="SERC 1187A"
+                        points="
+                            749,179
+                            783,179
+                            783,231
+                            749,231
+                        "
+                    />
+
+                    <!-- SERC 1187B -->
+                    <polygon
+                        class="room"
+                        data-room="1187B"
+                        data-name="SERC 1187B"
+                        points="
+                            701,179
+                            745,179
+                            745,230
+                            701,230
+                        "
+                    />
+
+                    <!-- SERC 1185 -->
+                    <polygon
+                        class="room"
+                        data-room="1185"
+                        data-name="SERC 1185"
+                        points="
+                            554,303
+                            661,303
+                            661,497
+                            554,497
+                        "
+                    />
+
+                    <!-- SERC 1191 -->
+                    <polygon
+                        class="room"
+                        data-room="1191"
+                        data-name="SERC 1191"
+                        points="
+                            741,308
+                            782,308
+                            782,600
+                            669,600
+                            669,585
+                            631,585
+                            633,502
+                            665,502
+                            665,372
+                            741,372
+                        "
+                    />
+
+                    <!-- SERC 1191C -->
+                    <polygon
+                        class="room"
+                        data-room="1191C"
+                        data-name="SERC 1191C"
+                        points="
+                            664,607
+                            748,607
+                            748,777
+                            664,777
+                        "
+                    />
+
+                    <!-- SERC 1191F -->
+                    <polygon
+                        class="room"
+                        data-room="1191F"
+                        data-name="SERC 1191F"
+                        points="
+                            554,503
+                            629,503
+                            629,584
+                            554,584
+                        "
+                    />
+
+                    <!-- SERC 1189B -->
+                    <polygon
+                        class="room"
+                        data-room="1189"
+                        data-name="SERC 1189B"
+                        points="
+                            818,30
+                            866,30
+                            866,111
+                            818,111
+                        "
+                    />
+
+                    <!-- SERC 1189 -->
+                    <polygon
+                        class="room"
+                        data-room="1189"
+                        data-name="SERC 1189"
+                        points="
+                            818,116
+                            866,116
+                            866,240
+                            818,240
+                        "
+                    />
+
+                    <!-- SERC 1190 -->
+                    <polygon
+                        class="room"
+                        data-room="1190"
+                        data-name="SERC 1190"
+                        points="
+                            818,245
+                            866,245
+                            866,311
+                            818,311
+                        "
+                    />
+
+                    <!-- SERC 1192 -->
+                    <polygon
+                        class="room"
+                        data-room="1192"
+                        data-name="SERC 1192"
+                        points="
+                            818,320
+                            866,320
+                            866,379
+                            818,379
+                        "
+                    />
+
+                    <!-- SERC 1193 -->
+                    <polygon
+                        class="room"
+                        data-room="1193"
+                        data-name="SERC 1193"
+                        points="
+                            818,388
+                            866,388
+                            866,446
+                            818,446
+                        "
+                    />
+
+                    <!-- SERC 1194 -->
+                    <polygon
+                        class="room"
+                        data-room="1194"
+                        data-name="SERC 1194"
+                        points="
+                            818,453
+                            866,453
+                            866,513
+                            818,513
+                        "
+                    />
+
+                    <!-- SERC 1195 -->
+                    <polygon
+                        class="room"
+                        data-room="1195"
+                        data-name="SERC 1195"
+                        points="
+                            818,521
+                            866,521
+                            866,582
+                            818,582
+                        "
+                    />
+
+                </svg>
+            </div>
+
+            <!-- FLOOR 2 -->
+            <div class="floor" id="floor-2">
+                <img src="Floors/SERC_2.png" class="floorplan-image">
+
+                <svg 
+                    class="room-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                >
+
+                    <!-- SERC 2270 -->
+                    <polygon
+                        class="room"
+                        data-room="2270"
+                        data-name="SERC 2270"
+                        points="
+                            51,939
+                            121,939
+                            121,992
+                            51,992
+                        "
+                    />
+
+                    <!-- SERC 2271 -->
+                    <polygon
+                        class="room"
+                        data-room="2271"
+                        data-name="SERC 2271"
+                        points="
+                            51,845
+                            100,845
+                            100,930
+                            51,930
+                        "
+                    />
+
+                    <!-- SERC 2272 -->
+                    <polygon
+                        class="room"
+                        data-room="2272"
+                        data-name="SERC 2272"
+                        points="
+                            51,777
+                            121,777
+                            121,837
+                            51,837
+                        "
+                    />
+
+                    <!-- SERC 2274 -->
+                    <polygon
+                        class="room"
+                        data-room="2274"
+                        data-name="SERC 2274"
+                        points="
+                            10,316
+                            129,316
+                            129,758
+                            10,758
+                        "
+                    />
+
+                    <!-- SERC 2273 -->
+                    <polygon
+                        class="room"
+                        data-room="2273"
+                        data-name="SERC 2273"
+                        points="
+                            164,696
+                            211,696
+                            211,758
+                            164,758
+                        "
+                    />
+
+                    <!-- SERC 2275 -->
+                    <polygon
+                        class="room"
+                        data-room="2275"
+                        data-name="SERC 2275"
+                        points="
+                            164,603
+                            211,603
+                            211,690
+                            164,690
+                        "
+                    />
+
+                    <!-- SERC 2276 -->
+                    <polygon
+                        class="room"
+                        data-room="2276"
+                        data-name="SERC 2276"
+                        points="
+                            164,510
+                            211,510
+                            211,566
+                            164,566
+                        "
+                    />
+
+                    <!-- SERC 2278 -->
+                    <polygon
+                        class="room"
+                        data-room="2274"
+                        data-name="SERC 2274"
+                        points="
+                            12,28
+                            61,28
+                            61,240
+                            12,240
+                        "
+                    />
+
+                    <!-- SERC 2279 -->
+                    <polygon
+                        class="room"
+                        data-room="2279"
+                        data-name="SERC 2279"
+                        points="
+                            65,32
+                            209,32
+                            209,205
+                            164,205
+                            164,220
+                            101,220
+                            101,205
+                            65,205
+                        "
+                    />
+
+                    <!-- SERC 2281 -->
+                    <polygon
+                        class="room"
+                        data-room="2281"
+                        data-name="SERC 2281"
+                        points="
+                            217,296
+                            327,296
+                            327,427
+                            217,427
+                        "
+                    />
+
+                    <!-- SERC 2285 -->
+                    <polygon
+                        class="room"
+                        data-room="2285"
+                        data-name="SERC 2285"
+                        points="
+                            508,209
+                            516,198
+                            522,185
+                            526,168
+                            527,157
+                            549,157
+                            549,222
+                            508,222
+                        "
+                    />
+
+                    <!-- SERC 2286 -->
+                    <polygon
+                        class="room"
+                        data-room="2286"
+                        data-name="SERC 2286"
+                        points="
+                            552,295
+                            660,295
+                            660,429
+                            552,429
+                        "
+                    />
+
+                    <!-- SERC 2287 -->
+                    <polygon
+                        class="room"
+                        data-room="2287"
+                        data-name="SERC 2287"
+                        points="
+                            553,102
+                            587,102
+                            587,221
+                            551,221
+                        "
+                    />
+
+                    <!-- SERC 2287B -->
+                    <polygon
+                        class="room"
+                        data-room="2287B"
+                        data-name="SERC 2287B"
+                        points="
+                            591,102
+                            661,102
+                            661,169
+                            591,169
+                        "
+                    />
+
+                    <!-- SERC 2287A -->
+                    <polygon
+                        class="room"
+                        data-room="2287A"
+                        data-name="SERC 2287A"
+                        points="
+                            592,177
+                            661,177
+                            661,222
+                            592,222
+                        "
+                    />
+
+                    <!-- SERC 2288 -->
+                    <polygon
+                        class="room"
+                        data-room="2288"
+                        data-name="SERC 2288"
+                        points="
+                            665,28
+                            731,28
+                            731,222
+                            665,222
+                        "
+                    />
+
+                    <!-- SERC 2289 -->
+                    <polygon
+                        class="room"
+                        data-room="2289"
+                        data-name="SERC 2289"
+                        points="
+                            735,28
+                            864,28
+                            864,212
+                            817,212
+                            817,223
+                            735,223
+                        "
+                    />
+
+                    <!-- SERC 2291 -->
+                    <polygon
+                        class="room"
+                        data-room="2291"
+                        data-name="SERC 2291"
+                        points="
+                            668,297
+                            782,297
+                            782,510
+                            668,510
+                        "
+                    />
+
+                    <!-- SERC 2296 -->
+                    <polygon
+                        class="room"
+                        data-room="2296"
+                        data-name="SERC 2296"
+                        points="
+                            664,518
+                            782,518
+                            782,755
+                            664,755
+                        "
+                    />
+
+                    <!-- SERC 2290 -->
+                    <polygon
+                        class="room"
+                        data-room="2290"
+                        data-name="SERC 2290"
+                        points="
+                            821,219
+                            865,219
+                            865,298
+                            821,298
+                        "
+                    />
+
+                    <!-- SERC 2292 -->
+                    <polygon
+                        class="room"
+                        data-room="2292"
+                        data-name="SERC 2292"
+                        points="
+                            817,305
+                            865,305
+                            865,361
+                            817,361
+                        "
+                    />
+
+                    <!-- SERC 2293 -->
+                    <polygon
+                        class="room"
+                        data-room="2293"
+                        data-name="SERC 2293"
+                        points="
+                            817,368
+                            865,368
+                            865,421
+                            817,421
+                        "
+                    />
+
+                    <!-- SERC 2294 -->
+                    <polygon
+                        class="room"
+                        data-room="2294"
+                        data-name="SERC 2294"
+                        points="
+                            817,430
+                            865,430
+                            865,483
+                            817,483
+                        "
+                    />
+
+                    <!-- SERC 2295 -->
+                    <polygon
+                        class="room"
+                        data-room="2295"
+                        data-name="SERC 2295"
+                        points="
+                            817,490
+                            865,490
+                            865,569
+                            817,569
+                        "
+                    />
+
+                    <!-- SERC 2297 -->
+                    <polygon
+                        class="room"
+                        data-room="2297"
+                        data-name="SERC 2297"
+                        points="
+                            706,775
+                            772,775
+                            772,834
+                            706,834
+                        "
+                    />
+
+                    <!-- SERC 2298 -->
+                    <polygon
+                        class="room"
+                        data-room="2298"
+                        data-name="SERC 2298"
+                        points="
+                            706,840
+                            772,840
+                            772,932
+                            706,932
+                        "
+                    />
+
+                    <!-- SERC 2299 -->
+                    <polygon
+                        class="room"
+                        data-room="2299"
+                        data-name="SERC 2299"
+                        points="
+                            706,938
+                            772,938
+                            772,990
+                            706,990
+                        "
+                    />
+
+                </svg>
+            </div>
+
+            <!-- FLOOR 3 -->
+            <div class="floor" id="floor-3">
+                <img src="Floors/SERC_3.png" class="floorplan-image">
+
+                <svg 
+                    class="room-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                >
+
+                    <!-- SERC 3377 -->
+                    <polygon
+                        class="room"
+                        data-room="3377"
+                        data-name="SERC 3377"
+                        points="
+                            50,773
+                            124,773
+                            124,992
+                            50,992
+                        "
+                    />
+
+                    <!-- SERC 3380 -->
+                    <polygon
+                        class="room"
+                        data-room="3380"
+                        data-name="SERC 3380"
+                        points="
+                            10,500
+                            124,500
+                            124,755
+                            10,755
+                        "
+                    />
+
+                    <!-- SERC 3381 -->
+                    <polygon
+                        class="room"
+                        data-room="3381"
+                        data-name="SERC 3381"
+                        points="
+                            10,242
+                            124,242
+                            124,496
+                            10,496
+                        "
+                    />
+
+                    <!-- SERC 3382 -->
+                    <polygon
+                        class="room"
+                        data-room="3382"
+                        data-name="SERC 3382"
+                        points="
+                            56,18
+                            209,18
+                            209,186
+                            56,186
+                        "
+                    />
+
+                    <!-- SERC 3383 -->
+                    <polygon
+                        class="room"
+                        data-room="3383"
+                        data-name="SERC 3383"
+                        points="
+                            215,292
+                            333,292
+                            333,421
+                            215,421
+                        "
+                    />
+
+                    <!-- SERC 3386A -->
+                    <polygon
+                        class="room"
+                        data-room="3386A"
+                        data-name="SERC 3386A"
+                        points="
+                            326,74
+                            368,74
+                            368,228
+                            344,228
+                            344,136
+                            326,136
+                        "
+                    />
+
+                    <!-- SERC 3386 -->
+                    <polygon
+                        class="room"
+                        data-room="3386"
+                        data-name="SERC 3386"
+                        points="
+                            371,44
+                            503,44
+                            503,207
+                            371,207
+                        "
+                    />
+
+                    <!-- SERC 3385 -->
+                    <polygon
+                        class="room"
+                        data-room="3385"
+                        data-name="SERC 3385"
+                        points="
+                            337,352
+                            369,352
+                            369,461
+                            505,461
+                            505,352
+                            537,352
+                            537,430
+                            547,430
+                            547,573
+                            502,573
+                            502,599
+                            372,599
+                            372,573
+                            327,573
+                            327,428
+                            337,428
+                        "
+                    />
+
+                    <!-- SERC 3385A -->
+                    <polygon
+                        class="room"
+                        data-room="3385A"
+                        data-name="SERC 3385A"
+                        points="
+                            373,454
+                            501,454
+                            501,307
+                            373,307
+                        "
+                    />
+
+                    <!-- SERC 3389 -->
+                    <polygon
+                        class="room"
+                        data-room="3389"
+                        data-name="SERC 3389"
+                        points="
+                            507,75
+                            548,75
+                            548,133
+                            507,133
+                        "
+                    />
+
+                    <!-- SERC 3390 -->
+                    <polygon
+                        class="room"
+                        data-room="3390"
+                        data-name="SERC 3390"
+                        points="
+                            552,93
+                            585,93
+                            585,172
+                            552,172
+                        "
+                    />
+
+                    <!-- SERC 3391 -->
+                    <polygon
+                        class="room"
+                        data-room="3391"
+                        data-name="SERC 3391"
+                        points="
+                            588,93
+                            623,93
+                            623,172
+                            588,172
+                        "
+                    />
+
+                    <!-- SERC 3392 -->
+                    <polygon
+                        class="room"
+                        data-room="3392"
+                        data-name="SERC 3392"
+                        points="
+                            627,93
+                            661,93
+                            661,172
+                            627,172
+                        "
+                    />
+
+                    <!-- SERC 3387 -->
+                    <polygon
+                        class="room"
+                        data-room="3387"
+                        data-name="SERC 3387"
+                        points="
+                            541,290
+                            660,290
+                            660,423
+                            541,423
+                        "
+                    />
+
+                    <!-- SERC 3397 -->
+                    <polygon
+                        class="room"
+                        data-room="3397"
+                        data-name="SERC 3397"
+                        points="
+                            665,290
+                            770,290
+                            770,333
+                            779,333
+                            779,445
+                            770,445
+                            770,487
+                            665,487
+                        "
+                    />
+
+                    <!-- SERC 3393 -->
+                    <polygon
+                        class="room"
+                        data-room="3393"
+                        data-name="SERC 3393"
+                        points="
+                            664,17
+                            713,17
+                            713,132
+                            664,132
+                        "
+                    />
+
+                    <!-- SERC 3395 -->
+                    <polygon
+                        class="room"
+                        data-room="3395"
+                        data-name="SERC 3395"
+                        points="
+                            717,17
+                            865,17
+                            865,205
+                            813,205
+                            813,229
+                            717,229
+                        "
+                    />
+
+                    <!-- SERC 3402 -->
+                    <polygon
+                        class="room"
+                        data-room="3402"
+                        data-name="SERC 3402"
+                        points="
+                            663,494
+                            770,494
+                            770,535
+                            779,535
+                            779,709
+                            770,709
+                            770,756
+                            663,756
+                        "
+                    />
+
+                    <!-- SERC 3396 -->
+                    <polygon
+                        class="room"
+                        data-room="3396"
+                        data-name="SERC 3396"
+                        points="
+                            817,211
+                            864,211
+                            864,294
+                            817,294
+                        "
+                    />
+
+                    <!-- SERC 3398 -->
+                    <polygon
+                        class="room"
+                        data-room="3398"
+                        data-name="SERC 3398"
+                        points="
+                            817,297
+                            864,297
+                            864,358
+                            817,358
+                        "
+                    />
+
+                    <!-- SERC 3399 -->
+                    <polygon
+                        class="room"
+                        data-room="3399"
+                        data-name="SERC 3399"
+                        points="
+                            817,365
+                            864,365
+                            864,418
+                            817,418
+                        "
+                    />
+
+                    <!-- SERC 3400 -->
+                    <polygon
+                        class="room"
+                        data-room="3400"
+                        data-name="SERC 3400"
+                        points="
+                            817,426
+                            864,426
+                            864,480
+                            817,480
+                        "
+                    />
+
+                    <!-- SERC 3401 -->
+                    <polygon
+                        class="room"
+                        data-room="3401"
+                        data-name="SERC 3401"
+                        points="
+                            817,486
+                            864,486
+                            864,565
+                            817,565
+                        "
+                    />
+
+                    <!-- SERC 3403 -->
+                    <polygon
+                        class="room"
+                        data-room="3403"
+                        data-name="SERC 3403"
+                        points="
+                            705,772
+                            780,772
+                            780,991
+                            705,991
+                        "
+                    />
+
+                    <!-- SERC 3396 -->
+                    <polygon
+                        class="room"
+                        data-room="3396"
+                        data-name="SERC 3396"
+                        points="
+                            817,211
+                            864,211
+                            864,294
+                            817,294
+                        "
+                    />
+
+                </svg>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

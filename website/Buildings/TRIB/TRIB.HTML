@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMap: MCM</title>
+
+    <link rel="stylesheet" href="../../style.css">
+    <script src="../../script.js"></script>
+
+    <!-- <script>alert("Please Note:\n\nSome rooms may be labeled differently then they appear");</script> -->
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            /* padding: 20px; */
+            font-family: Arial, sans-serif;
+            background: #f3f3f3;
+            overflow:hidden;
+        }
+
+        /*
+         * Main layout
+         *
+         * Information = roughly 20vw
+         * Floorplan   = roughly 80vw
+         */
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            /* gap: 20px; */
+            width: 100%;
+        }
+
+        /*
+         * Information panel
+         */
+        .room-info {
+            width: 20vw;
+            min-width: 220px;
+
+            padding: 20px;
+
+            background: white;
+            border-radius: 8px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+            position: sticky;
+            top: 20px;
+        }
+
+        .room-info h2 {
+            margin: 0 0 10px;
+        }
+
+        .room-info p {
+            margin: 0;
+            color: #666;
+            line-height: 1.5;
+
+            overflow-y: scroll;
+        }
+
+        /*
+         * Floorplan area
+         */
+        .floorplan-container {
+            position: relative;
+            width: 80vw;
+            height: 95vh;
+            max-width: calc(80vw - 20px);
+            max-height: calc(95vh - 20px);
+        }
+
+        /*
+         * Actual floorplan image
+         */
+        .floorplan-image {
+            display: block;
+
+            width: 80vw;
+            height: 95vh;
+            aspect-ratio: 1/1;
+            padding-right: 10vw;
+
+            /*
+             * Keeps the image square.
+             *
+             * Change this to "contain" if your source image
+             * isn't actually square and you don't want it cropped.
+             */
+        }
+
+        /*
+         * SVG sits exactly on top of the floorplan.
+         */
+        .room-overlay {
+            position: absolute;
+
+            top: 0;
+            left: 0;
+
+            width: 80vw;
+            height: 95vh;
+        }
+
+        /*
+         * Individual rooms
+         */
+        .room {
+            fill: rgba(0, 120, 255, 0.20);
+            stroke: rgba(0, 120, 255, 0.8);
+            stroke-width: 2;
+
+            cursor: pointer;
+
+            transition:
+                fill 0.15s ease,
+                stroke 0.15s ease;
+        }
+
+        .room:hover {
+            fill: rgba(0, 120, 255, 0.45);
+            stroke: #0066cc;
+        }
+
+        .room.selected {
+            fill: rgba(255, 170, 0, 0.50);
+            stroke: #ff9900;
+            stroke-width: 3;
+        }
+
+        /* TABLET / PHONE */
+        @media (max-width: 700px) {
+
+            body {
+                padding: 10px;
+                overflow-y: auto;
+            }
+
+            .main-layout {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
+            /* Floor buttons come first */
+            .floor-buttons {
+                order: 1;
+                display: flex;
+                width: 100%;
+                justify-content: center;
+                gap: 5px;
+            }
+
+            /* Map comes second */
+            .floorplan-container {
+                order: 2;
+
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+
+                aspect-ratio: 1 / 1;
+            }
+
+            /* Information comes last */
+            .room-info {
+                order: 3;
+
+                width: 100%;
+                min-width: 0;
+
+                position: static;
+
+                padding: 15px;
+            }
+
+            /* Make the floor buttons horizontal on phones */
+            .floor_button {
+                height: 45px;
+                width: auto;
+                flex: 1;
+
+                writing-mode: horizontal-tb;
+                text-orientation: initial;
+            }
+
+            /* Make the floorplan fit the phone width */
+            .floorplan-image {
+                width: 100%;
+                height: auto;
+                padding-right: 0;
+            }
+
+            .room-overlay {
+                width: 100%;
+                height: 100%;
+            }
+        }
+        
+        .floor {
+            display: none;
+        }
+
+        .floor.active {
+            display: block;
+        }
+
+        .floor_button {
+            height: 30vh;
+            width: 2vw;
+            padding: 0;
+            writing-mode: vertical-lr;
+            text-orientation: upright;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Delete this later */
+        #mouse-coordinates {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            background: #003366;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+
+    </style>
+</head>
+
+<body data-building="LUTR">
+        <!-- NavBar-->
+    <nav class="navbar">
+        <h1 class="navbar-title">Interactive Map of Campus</h1>
+
+        <ul class="navbar-links">
+            <li class="dropdown">
+                <a href="#"><button class="menu-btn">&#9776;</button></a>
+                <ul class="dropdown-menu">
+                    <li><a href="../../../index.html">Home</a></li>
+                    <li class="dropdown"><a href="#">Buildings</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="../TFAC/TFAC.html">(TFAC) Torggler Fine Arts Center</a></li>
+                            <li><a href="../FORBES/FORBES.HTML">(FORBES) Forbes</a></li>
+                            <li><a href="../LUTR/LUTR.HTML">(LUTR) Luter</a></li>
+                            <li><a href="../MCM/MCM.HTML">(MCM) McMurran</a></li>
+                            <li><a href="../FERG/FERG.HTML">(FERG) Ferguson</a></li>
+                            <li><a href="../SERC/SERC.HTML">(SERC) Science and Engineering Recearch Center</a></li>
+                            <li><a href="../TRIB/TRIB.HTML">(TRIB) Trible Library</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#">Search</a></li>
+                    <li><a href="#">About</a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="navbar-logo">
+            <a href="../../../index.html">
+                <img src="../../img/Wumpus.png" alt="IMAP Logo">
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-layout">
+
+        <!--
+            INFORMATION PANEL
+        -->
+        <div class="room-info">
+
+            <!-- Delete this later -->
+            <div id="mouse-coordinates">
+                X: <span id="mouse-x">---</span>
+                &nbsp;|&nbsp;
+                Y: <span id="mouse-y">---</span>
+            </div>
+
+            <h2 id="room-name">
+                Select a room
+            </h2>
+
+            <p id="room-description">
+                Click a room on the floorplan.
+            </p>
+
+        </div>
+
+
+        <!--
+            FLOORPLAN
+        -->
+        <div class="floor-buttons">
+            <button class="floor_button", onclick="showFloor(1)">Floor 1</button>
+            <button class="floor_button", onclick="showFloor(2)">Floor 2</button>
+            <button class="floor_button", onclick="showFloor(3)">Floor 3</button>
+        </div>
+
+        <div class="floorplan-container">
+
+            <!-- FLOOR 1 -->
+            <div class="active floor" id="floor-1">
+                <img src="Floors/LUTR_1.png" class="floorplan-image">
+                <svg
+                    class="room-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                >
+
+                    <!-- LUTR 105 -->
+                    <polygon
+                        class="room"
+                        data-room="105"
+                        data-name="LUTR 105"
+                        points="
+                            30,255
+                            100,255
+                            100,417
+                            30,417
+                        "
+                    />
+
+                </svg>
+            </div>
+
+            <!-- FLOOR 2 -->
+            <div class="floor" id="floor-2">
+                <img src="Floors/LUTR_2.png" class="floorplan-image">
+
+                <svg 
+                    class="room-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                >
+                    <!-- LUTR 204 -->
+                    <polygon
+                        class="room"
+                        data-room="204"
+                        data-name="LUTR 204"
+                        points="
+                            10,275
+                            78,275
+                            78,398
+                            10,398
+                        "
+                    />
+
+                </svg>
+            </div>
+
+            <!-- FLOOR 3 -->
+            <div class="floor" id="floor-3">
+                <img src="Floors/LUTR_3.png" class="floorplan-image">
+
+                <svg 
+                    class="room-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                >
+                    <!-- LUTR 301 -->
+                    <polygon
+                        class="room"
+                        data-room="301"
+                        data-name="LUTR 301"
+                        points="
+                            12,54
+                            36,54
+                            36,42
+                            99,42
+                            99,191
+                            83,191
+                            72,205
+                            12,205
+                        "
+                    />
+
+                </svg>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

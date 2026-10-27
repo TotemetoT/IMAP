@@ -203,7 +203,7 @@ def Instructor(N, full=False):
             I = I.split('; ')
             c = 0
             for i in I:
-                print(I, i)
+                # print(I, i)
                 I[c] = i.split(', ')
                 c += 1
             for _ in range(len(I)):
@@ -230,5 +230,6 @@ def Course(C):
 
 
 if __name__ == "__main__":
-    print(RoomTimes("TFAC 102", "T"))
-
+    r = Instructor("John Finn")
+    for R in r:
+        print(R.course, R.location)
