@@ -1,11 +1,22 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import pandas as pd
+import dataloader as dl
+import filter as f
+import configs as cfg
 
-app = FastAPI()
+# Lifespan context manager loads CSV data once when Render boots the app
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    cfg.COURSES = dl.Load_CSV()
+    cfg.FULL_COURSES = dl.Full_Load_CSV()
+    print(f"Loaded {len(cfg.COURSES)} active courses.")
+    yield
 
-# Allow your website domain (or "*" for open access) to send requests
+app = FastAPI(lifespan=lifespan)
+
+# Enable CORS for your interactive frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,31 +25,98 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load CSV once when service boots
-df = pd.read_csv("Fall2026.csv")
-
 @app.get("/")
 def home():
     return {"message": "Campus Map API is live!"}
 
 @app.get("/api/room-times")
 def get_room_times(fullRoomId: str, day: str):
+    """
+    Fetches class times and course details for a clicked room on a specific day.
+    Matches inputs like 'TFAC 205', '205', or 'SERC 1181'.
+    """
     search_id = fullRoomId.strip().upper()
-    matching_rows = []
 
-    for idx, row in df.iterrows():
-        loc_str = str(row['Location']) if pd.notna(row['Location']) else ""
-        locations = [l.strip().upper() for l in loc_str.split(';')]
+    # Extract room number token if fullRoomId includes building code (e.g., "205" from "TFAC 205")
+    room_number = search_id.split()[-1] if " " in search_id else search_id
 
-        if any(loc == search_id or loc.startswith(search_id) for loc in locations):
-            days = str(row['Days']) if pd.notna(row['Days']) else ""
-            if day in days:
-                matching_rows.append({
-                    "course": str(row['Course']),
-                    "title": str(row['Title']),
-                    "instructor": str(row['Instructor']) if pd.notna(row['Instructor']) else "",
-                    "crn": str(row['CRN']),
-                    "time": str(row['Time'])
-                })
+    matching_courses = []
 
-    return {"room": search_id, "classes": matching_rows}
+    for course in cfg.COURSES:
+        locations = [x.strip().upper() for x in course.location.split(";")]
+
+        # Check if course location matches full string ("TFAC 205") or room number ("205")
+        location_matches = any(
+            search_id in loc or room_number in loc
+            for loc in locations
+        )
+
+        if location_matches and day in course.days:
+            matching_courses.append({
+                "course": course.course,
+                "title": course.title,
+                "instructor": course.instructor,
+                "crn": course.CRN,
+                "time": course.time,
+                "location": course.location
+            })
+
+    # Get formatted time ranges using your filter.py RoomTimes function
+    raw_times = f.RoomTimes(room_number, day)
+
+    return {
+        "room": search_id,
+        "times": raw_times,
+        "classes": matching_courses
+    }
+
+@app.get("/api/search")
+def search_courses(type: str, query: str, day: str = "M"):
+    """
+    Executes search queries using filter.py functions.
+    """
+    results = []
+
+    if type == "Course":
+        courses = f.Course(query)
+        results = [
+            {
+                "course": c.course,
+                "title": c.title,
+                "instructor": c.instructor,
+                "time": c.time,
+                "location": c.location,
+                "crn": c.CRN
+            }
+            for c in courses
+        ]
+
+    elif type == "Instructor":
+        courses = f.Instructor(query)
+        results = [
+            {
+                "course": c.course,
+                "title": c.title,
+                "instructor": c.instructor,
+                "time": c.time,
+                "location": c.location,
+                "crn": c.CRN
+            }
+            for c in courses
+        ]
+
+    elif type == "CRN":
+        c = f.CRN(query)
+        if c:
+            results = [
+                {
+                    "course": c.course,
+                    "title": c.title,
+                    "instructor": c.instructor,
+                    "time": c.time,
+                    "location": c.location,
+                    "crn": c.CRN
+                }
+            ]
+
+    return {"results": results}
