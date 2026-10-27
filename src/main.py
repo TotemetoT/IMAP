@@ -77,3 +77,42 @@ def get_room_times(
         "times": raw_times,
         "classes": matching_courses
     }
+
+@app.get("/api/search")
+def search_courses(
+    type: str = Query("course"),
+    query: str = Query(""),
+    day: str = Query(None),
+    time: str = Query(None)
+):
+    results = []
+    
+    if type == "course":
+        courses = f.Course(query)
+    elif type == "crn":
+        match = f.CRN(query)
+        courses = [match] if match else []
+    elif type == "instructor":
+        courses = f.Instructor(query)
+    elif type == "location" or type == "room":
+        courses = f.Location(query)
+    elif type == "time":
+        if time and day:
+            used, _ = f.Time(time, day)
+            courses = used
+        else:
+            courses = []
+    else:
+        courses = []
+
+    for course in courses:
+        results.append({
+            "course": str(getattr(course, "course", "") or ""),
+            "title": str(getattr(course, "title", "") or ""),
+            "instructor": str(getattr(course, "instructor", "") or ""),
+            "crn": str(getattr(course, "CRN", "") or ""),
+            "time": str(getattr(course, "time", "") or ""),
+            "location": str(getattr(course, "location", "") or "")
+        })
+
+    return {"results": results}
