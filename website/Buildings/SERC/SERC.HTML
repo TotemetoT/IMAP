@@ -6,7 +6,7 @@
     <title>IMap: SERC</title>
 
     <link rel="stylesheet" href="../../style.css">
-    <script src="../../script.js"></script>
+    <script type="module" src="../../script.js"></script>
 
     <!-- <script>alert("Please Note:\n\nSome rooms may be labeled differently then they appear");</script> -->
 
@@ -284,14 +284,6 @@
             INFORMATION PANEL
         -->
         <div class="room-info">
-
-            <!-- Delete this later -->
-            <div id="mouse-coordinates">
-                X: <span id="mouse-x">---</span>
-                &nbsp;|&nbsp;
-                Y: <span id="mouse-y">---</span>
-            </div>
-
             <h2 id="room-name">
                 Select a room
             </h2>
@@ -315,7 +307,7 @@
         <div class="floorplan-container">
 
             <!-- FLOOR 1 -->
-            <div class="floor" id="floor-1">
+            <div class="active floor" id="floor-1">
                 <img src="Floors/SERC_1.png" class="floorplan-image">
                 <svg
                     class="room-overlay"
@@ -1036,7 +1028,7 @@
             </div>
 
             <!-- FLOOR 3 -->
-            <div class="active floor" id="floor-3">
+            <div class="floor" id="floor-3">
                 <img src="Floors/SERC_3.png" class="floorplan-image">
 
                 <svg 
@@ -1381,25 +1373,18 @@
                         "
                     />
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    <!-- SERC 3396 -->
+                    <polygon
+                        class="room"
+                        data-room="3396"
+                        data-name="SERC 3396"
+                        points="
+                            817,211
+                            864,211
+                            864,294
+                            817,294
+                        "
+                    />
 
                 </svg>
             </div>

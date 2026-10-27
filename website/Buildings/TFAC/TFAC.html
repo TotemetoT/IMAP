@@ -6,7 +6,7 @@
     <title>IMap: TFAC</title>
 
     <link rel="stylesheet" href="../../style.css">
-    <script src="../../script.js"></script>
+    <script type="module" src="../../script.js"></script>
 
     <style>
         * {
@@ -295,7 +295,7 @@
 <body data-building="TFAC">
         <!-- NavBar-->
     <nav class="navbar">
-        <h1 class="navbar-title">Interactive Map of Campus (Luter)</h1>
+        <h1 class="navbar-title">Interactive Map of Campus</h1>
 
         <ul class="navbar-links">
             <li class="dropdown">
@@ -313,7 +313,7 @@
                             <li><a href="../TRIB/TRIB.HTML">(TRIB) Trible Library</a></li>
                         </ul>
                     </li>
-                    <li><a href="#">Search</a></li>
+                    <li><a href="#" id="nav-search-btn">Search</a></li>
                     <li><a href="#">About</a></li>
                 </ul>
             </li>
@@ -361,7 +361,7 @@
                             type="search"
                             id="filter-query"
                             name="query"
-                            placeholder="e.g., CPSC 310"
+                            placeholder="e.g., CPSC 150"
                         >
                     </div>
 
@@ -1248,134 +1248,6 @@
 
         </div>
     </div>
-
-
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const navbarSearch = document.getElementById("navbar-search");
-        const roomView = document.getElementById("room-info-view");
-        const searchView = document.getElementById("search-info-view");
-
-        const filterType = document.getElementById("filter-type");
-        const queryLabel = document.getElementById("query-label");
-        const queryInput = document.getElementById("filter-query");
-        const timeOptions = document.getElementById("time-options");
-
-        const searchForm = document.getElementById("course-search-form");
-        const searchResults = document.getElementById("search-results");
-
-        // Show the search panel in place of the room information.
-        function showSearchPanel(event) {
-            event.preventDefault();
-
-            roomView.hidden = true;
-            searchView.hidden = false;
-
-            updateSearchFields();
-            queryInput.focus();
-        }
-
-        // Return to the original room-information panel.
-        function showRoomInfo() {
-            searchView.hidden = true;
-            roomView.hidden = false;
-        }
-
-        // Change the fields based on the selected filter.
-        function updateSearchFields() {
-            const options = {
-                course: {
-                    label: "Course code:",
-                    placeholder: "e.g., CPSC 310"
-                },
-                crn: {
-                    label: "CRN:",
-                    placeholder: "e.g., 12345"
-                },
-                instructor: {
-                    label: "Instructor:",
-                    placeholder: "Enter instructor name"
-                },
-                location: {
-                    label: "Building / location:",
-                    placeholder: "e.g., TFAC"
-                },
-                room: {
-                    label: "Room ID:",
-                    placeholder: "e.g., 124A"
-                },
-                time: {
-                    label: "Optional course or room:",
-                    placeholder: "e.g., CPSC or 124"
-                }
-            };
-
-            const selected = options[filterType.value];
-
-            queryLabel.textContent = selected.label;
-            queryInput.placeholder = selected.placeholder;
-
-            // Show the day and time fields only for time searches.
-            timeOptions.hidden = filterType.value !== "time";
-        }
-
-        // Navbar Search click.
-        navbarSearch.addEventListener("click", showSearchPanel);
-
-        // Search button inside the panel.
-        document.getElementById("back-to-room")
-            .addEventListener("click", showRoomInfo);
-
-        // Update the fields when the filter changes.
-        filterType.addEventListener("change", updateSearchFields);
-
-        // Clear all search inputs and results.
-        document.getElementById("clear-search")
-            .addEventListener("click", function () {
-                searchForm.reset();
-                searchResults.replaceChildren();
-                updateSearchFields();
-            });
-
-        // Prevent the form from navigating away or refreshing the page.
-        searchForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            const type = filterType.value;
-            const query = queryInput.value.trim();
-
-            searchResults.textContent = "";
-
-            if (type === "time") {
-                const time = document.getElementById("filter-time").value.trim();
-                const day = document.getElementById("filter-day").value;
-
-                if (!/^\d{3,4}$/.test(time)) {
-                    searchResults.textContent =
-                        "Enter a time in 24-hour HHMM format, such as 1330.";
-                    return;
-                }
-
-                searchResults.textContent =
-                    "Time filter selected: " + day + " at " + time +
-                    ". Connect this form to your course-filtering functions to display matching results.";
-                return;
-            }
-
-            if (!query) {
-                searchResults.textContent = "Please enter a search value.";
-                return;
-            }
-
-            searchResults.textContent =
-                "Search for \"" + query + "\" using the " +
-                filterType.options[filterType.selectedIndex].text +
-                " filter. Connect this form to your course-filtering functions to display matching results.";
-        });
-
-        updateSearchFields();
-    });
-    </script>
 
 </body>
 </html>
