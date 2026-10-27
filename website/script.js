@@ -1,27 +1,4 @@
-/* ============================================================
-   script.js
-   Main browser controller for the interactive campus floorplan.
-   ============================================================ */
-
-// Replace this URL with your actual live Render API URL
-const RENDER_API_URL = "https://imap.onrender.com";
-
-
-// ============================================================
-// HELPER: GET CURRENT DAY CODE
-// M = Monday, T = Tuesday, W = Wednesday,
-// R = Thursday, F = Friday, S = Saturday, U = Sunday.
-// ============================================================
-
-function getTodayCode() {
-    const day = new Date().getDay();
-    return ["U", "M", "T", "W", "R", "F", "S"][day];
-}
-
-
-// ============================================================
-// FETCH & DISPLAY ROOM INFORMATION FROM PYTHON BACKEND
-// ============================================================
+const RENDER_API_URL = "https://imap-bi2w.onrender.com";
 
 async function updateRoomInformation(room) {
     const roomName = document.getElementById("room-name");
@@ -29,7 +6,6 @@ async function updateRoomInformation(room) {
 
     if (!roomName || !roomDescription || !room) return;
 
-    // Grab room identifier (e.g., "TFAC 205" or "SERC 1181")
     const fullRoomId = room.id || room.dataset.name || room.dataset.room || "Selected Room";
     const today = getTodayCode();
 
@@ -37,7 +13,6 @@ async function updateRoomInformation(room) {
     roomDescription.textContent = "Loading schedule...";
 
     try {
-        // Fetch class times directly from your Python API (main.py -> filter.py)
         const response = await fetch(
             `${RENDER_API_URL}/api/room-times?fullRoomId=${encodeURIComponent(fullRoomId)}&day=${today}`
         );
@@ -54,7 +29,6 @@ async function updateRoomInformation(room) {
             return;
         }
 
-        // Clear loading text and populate class list
         roomDescription.replaceChildren();
 
         const heading = document.createElement("strong");
@@ -82,56 +56,3 @@ async function updateRoomInformation(room) {
         roomDescription.textContent = "Unable to fetch class schedule.";
     }
 }
-
-
-// ============================================================
-// ROOM SELECTION & CLICK HANDLERS
-// Makes SVG polygon shapes clickable on the floorplan
-// ============================================================
-
-function initializeRooms() {
-    const rooms = document.querySelectorAll(".room");
-
-    rooms.forEach(room => {
-        room.addEventListener("click", function () {
-            // Remove selection class from all rooms
-            rooms.forEach(r => r.classList.remove("selected"));
-
-            // Highlight clicked room
-            this.classList.add("selected");
-
-            // Update sidebar with class data
-            updateRoomInformation(this);
-        });
-    });
-
-    console.log(`Initialized click handlers for ${rooms.length} rooms.`);
-}
-
-
-// ============================================================
-// FLOOR SWITCHING FUNCTIONALITY
-// ============================================================
-
-function showFloor(floorNumber) {
-    document.querySelectorAll(".floor").forEach(floor => {
-        floor.classList.remove("active");
-    });
-
-    const selectedFloor = document.getElementById(`floor-${floorNumber}`);
-    if (selectedFloor) {
-        selectedFloor.classList.add("active");
-    }
-}
-
-
-// ============================================================
-// INITIALIZATION ON PAGE LOAD
-// ============================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-    initializeRooms();
-});
-
-// Expose floor switching globally for HTML onclick attributes
-window.showFloor = showFloor;
