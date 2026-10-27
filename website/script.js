@@ -1,12 +1,27 @@
 const RENDER_API_URL = "https://imap-bi2w.onrender.com";
 
+// ============================================================
+// HELPER: GET CURRENT DAY CODE
+// M = Monday, T = Tuesday, W = Wednesday,
+// R = Thursday, F = Friday, S = Saturday, U = Sunday.
+// ============================================================
+function getTodayCode() {
+    const day = new Date().getDay();
+    return ["U", "M", "T", "W", "R", "F", "S"][day];
+}
+
+
+// ============================================================
+// FETCH & DISPLAY ROOM INFORMATION FROM PYTHON BACKEND
+// ============================================================
 async function updateRoomInformation(room) {
     const roomName = document.getElementById("room-name");
     const roomDescription = document.getElementById("room-description");
 
     if (!roomName || !roomDescription || !room) return;
 
-    const fullRoomId = room.id || room.dataset.name || room.dataset.room || "Selected Room";
+    // Grab room identifier (e.g., "TFAC 205" or "SERC 1181")
+    const fullRoomId = room.dataset.name || room.id || room.dataset.room || "Selected Room";
     const today = getTodayCode();
 
     roomName.textContent = fullRoomId;
@@ -56,3 +71,54 @@ async function updateRoomInformation(room) {
         roomDescription.textContent = "Unable to fetch class schedule.";
     }
 }
+
+
+// ============================================================
+// ROOM SELECTION & CLICK HANDLERS
+// ============================================================
+function initializeRooms() {
+    const rooms = document.querySelectorAll(".room");
+
+    rooms.forEach(room => {
+        room.addEventListener("click", function (e) {
+            e.stopPropagation();
+
+            // Remove selection state from all rooms
+            rooms.forEach(r => r.classList.remove("selected"));
+
+            // Highlight clicked polygon
+            this.classList.add("selected");
+
+            // Fetch and update sidebar info
+            updateRoomInformation(this);
+        });
+    });
+
+    console.log(`Initialized click handlers for ${rooms.length} rooms.`);
+}
+
+
+// ============================================================
+// FLOOR SWITCHING FUNCTIONALITY
+// ============================================================
+function showFloor(floorNumber) {
+    document.querySelectorAll(".floor").forEach(floor => {
+        floor.classList.remove("active");
+    });
+
+    const selectedFloor = document.getElementById(`floor-${floorNumber}`);
+    if (selectedFloor) {
+        selectedFloor.classList.add("active");
+    }
+}
+
+
+// ============================================================
+// INITIALIZATION ON DOM READY
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+    initializeRooms();
+});
+
+// Expose floor switching to window for HTML onclick attributes
+window.showFloor = showFloor;
