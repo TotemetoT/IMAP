@@ -18,7 +18,11 @@ app = FastAPI(lifespan=lifespan, redirect_slashes=True)
 # Add CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://totemetot.github.io",
+        "https://totemetot.github.io/IMAP",
+        "*"  # Allows access from any origin (ideal for testing)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
