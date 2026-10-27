@@ -12,13 +12,12 @@ async def lifespan(app: FastAPI):
     print(f"Loaded {len(cfg.COURSES)} courses into memory.")
     yield
 
-# FastAPI automatically redirects /api/room-times/ to /api/room-times when redirect_slashes=True
-app = FastAPI(lifespan=lifespan, redirect_slashes=True)
+app = FastAPI(lifespan=lifespan)
 
-# Enable CORS for your GitHub Pages frontend
+# Add CORS Middleware at the very top of app configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Wildcard allows requests from https://totemetot.github.io/IMAP
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,8 +60,7 @@ def get_room_times(
 
     try:
         raw_times = f.RoomTimes(room_number, day)
-    except Exception as e:
-        print(f"Error in RoomTimes: {e}")
+    except Exception:
         raw_times = []
 
     return {
