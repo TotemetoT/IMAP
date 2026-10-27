@@ -12,17 +12,13 @@ async def lifespan(app: FastAPI):
     print(f"Loaded {len(cfg.COURSES)} courses into memory.")
     yield
 
-# Enable redirect_slashes to prevent 404s on URL variations
+# FastAPI automatically redirects /api/room-times/ to /api/room-times when redirect_slashes=True
 app = FastAPI(lifespan=lifespan, redirect_slashes=True)
 
-# Add CORS Middleware
+# Enable CORS for your GitHub Pages frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://totemetot.github.io",
-        "https://totemetot.github.io/IMAP",
-        "*"  # Allows access from any origin (ideal for testing)
-    ],
+    allow_origins=["*"],  # Wildcard allows requests from https://totemetot.github.io/IMAP
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,9 +28,7 @@ app.add_middleware(
 def home():
     return {"message": "Campus Map API is live!"}
 
-# Handle both /api/room-times and /api/room-times/
 @app.get("/api/room-times")
-@app.get("/api/room-times/")
 def get_room_times(
     fullRoomId: str = Query(..., alias="fullRoomId"),
     day: str = Query("M")
