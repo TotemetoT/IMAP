@@ -7,7 +7,6 @@ import filter as f
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load course data into configs on startup
     cfg.COURSES = dl.Load_CSV()
     cfg.FULL_COURSES = dl.Full_Load_CSV()
     print(f"Loaded {len(cfg.COURSES)} courses into memory.")
@@ -15,9 +14,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# MUST BE ADDED IMMEDIATELY AFTER app = FastAPI(...)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://totemetot.github.io",  # Explicitly allow your GitHub Pages site
+        "*"                             # Fallback to allow any origin
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,21 +38,24 @@ def get_room_times(fullRoomId: str, day: str):
     matching_courses = []
 
     for course in cfg.COURSES:
-        locations = [x.strip().upper() for x in course.location.split(";")]
+        c_location = str(course.location or "").upper()
+        c_days = str(course.days or "")
+
+        locations = [x.strip() for x in c_location.split(";")]
 
         location_matches = any(
             search_id in loc or room_number in loc
             for loc in locations
         )
 
-        if location_matches and day in course.days:
+        if location_matches and day in c_days:
             matching_courses.append({
-                "course": course.course,
-                "title": course.title,
-                "instructor": course.instructor,
-                "crn": course.CRN,
-                "time": course.time,
-                "location": course.location
+                "course": str(course.course or ""),
+                "title": str(course.title or ""),
+                "instructor": str(course.instructor or ""),
+                "crn": str(course.CRN or ""),
+                "time": str(course.time or ""),
+                "location": str(course.location or "")
             })
 
     raw_times = f.RoomTimes(room_number, day)
