@@ -4,7 +4,7 @@
    ============================================================ */
 
 // Replace this URL with your actual live Render API URL
-const RENDER_API_URL = "https://IMAP.onrender.com";
+const RENDER_API_URL = "https://imap.onrender.com";
 
 
 // ============================================================
