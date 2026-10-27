@@ -30,10 +30,14 @@ def home():
 @app.get("/api/room-times")
 def get_room_times(
     fullRoomId: str = Query(..., alias="fullRoomId"),
+    building: str = Query(None),
     day: str = Query("M")
 ):
     search_id = fullRoomId.strip().upper()
     room_number = search_id.split()[-1] if " " in search_id else search_id
+    
+    # If building isn't provided separately, try extracting it from fullRoomId (e.g., "TFAC 102")
+    building_prefix = building.upper() if building else (search_id.split()[0] if " " in search_id else "")
 
     matching_courses = []
 
@@ -43,10 +47,15 @@ def get_room_times(
 
         locations = [x.strip() for x in c_location.split(";")]
 
-        location_matches = any(
-            search_id in loc or room_number in loc
-            for loc in locations
-        )
+        # Ensure matching requires BOTH the building prefix and the room number
+        location_matches = False
+        for loc in locations:
+            if building_prefix and building_prefix in loc and room_number in loc:
+                location_matches = True
+                break
+            elif not building_prefix and (search_id in loc or room_number in loc):
+                location_matches = True
+                break
 
         if location_matches and day in c_days:
             matching_courses.append({
