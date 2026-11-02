@@ -10,242 +10,9 @@
 
     <!-- <script>alert("Please Note:\n\nSome rooms may be labeled differently then they appear");</script> -->
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            /* padding: 20px; */
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            overflow-x:scroll;
-        }
-
-        /*
-         * Main layout
-         *
-         * Information = roughly 20vw
-         * Floorplan   = roughly 80vw
-         */
-        .main-layout {
-            display: flex;
-            align-items: flex-start;
-            /* gap: 20px; */
-            width: 100%;
-        }
-
-        /*
-         * Information panel
-         */
-        .room-info {
-            width: 20vw;
-            min-width: 220px;
-
-            padding: 20px;
-
-            background: white;
-            border-radius: 8px;
-
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
-            position: sticky;
-            top: 20px;
-        }
-
-        .room-info h2 {
-            margin: 0 0 10px;
-        }
-
-        .room-info p {
-            margin: 0;
-            color: #666;
-            line-height: 1.5;
-
-            overflow-y: scroll;
-        }
-
-        /*
-         * Floorplan area
-         */
-        .floorplan-container {
-            position: relative;
-            width: 80vw;
-            height: 95vh;
-            max-width: calc(80vw - 20px);
-            max-height: calc(95vh - 20px);
-        }
-
-        /*
-         * Actual floorplan image
-         */
-        .floorplan-image {
-            display: block;
-
-            width: 80vw;
-            height: 95vh;
-            aspect-ratio: 1/1;
-            padding-right: 10vw;
-
-            /*
-             * Keeps the image square.
-             *
-             * Change this to "contain" if your source image
-             * isn't actually square and you don't want it cropped.
-             */
-        }
-
-        /*
-         * SVG sits exactly on top of the floorplan.
-         */
-        .room-overlay {
-            position: absolute;
-
-            top: 0;
-            left: 0;
-
-            width: 80vw;
-            height: 95vh;
-        }
-
-        /*
-         * Individual rooms
-         */
-        .room {
-            fill: rgba(0, 120, 255, 0.20);
-            stroke: rgba(0, 120, 255, 0.8);
-            stroke-width: 2;
-
-            cursor: pointer;
-
-            transition:
-                fill 0.15s ease,
-                stroke 0.15s ease;
-        }
-
-        .room:hover {
-            fill: rgba(0, 120, 255, 0.45);
-            stroke: #0066cc;
-        }
-
-        .room.selected {
-            fill: rgba(255, 170, 0, 0.50);
-            stroke: #ff9900;
-            stroke-width: 3;
-        }
-
-        /* TABLET / PHONE */
-        @media (max-width: 700px) {
-
-            body {
-                padding: 10px;
-                overflow-y: auto;
-            }
-
-            .main-layout {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                width: 100%;
-            }
-
-            /* Floor buttons come first */
-            .floor-buttons {
-                order: 1;
-                display: flex;
-                width: 100%;
-                justify-content: center;
-                gap: 5px;
-            }
-
-            /* Map comes second */
-            .floorplan-container {
-                order: 2;
-
-                width: 100%;
-                max-width: 100%;
-                height: auto;
-
-                aspect-ratio: 1 / 1;
-            }
-
-            /* Information comes last */
-            .room-info {
-                order: 3;
-
-                width: 100%;
-                min-width: 0;
-
-                position: static;
-
-                padding: 15px;
-            }
-
-            /* Make the floor buttons horizontal on phones */
-            .floor_button {
-                height: 45px;
-                width: auto;
-                flex: 1;
-
-                writing-mode: horizontal-tb;
-                text-orientation: initial;
-            }
-
-            /* Make the floorplan fit the phone width */
-            .floorplan-image {
-                width: 100%;
-                height: auto;
-                padding-right: 0;
-            }
-
-            .room-overlay {
-                width: 100%;
-                height: 100%;
-            }
-        }
-        
-        .floor {
-            display: none;
-        }
-
-        .floor.active {
-            display: block;
-        }
-
-        .floor_button {
-            height: 30vh;
-            width: 2vw;
-            padding: 0;
-            writing-mode: vertical-lr;
-            text-orientation: upright;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Delete this later */
-        #mouse-coordinates {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 9999;
-            background: #003366;
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            pointer-events: none;
-        }
-
-
-    </style>
 </head>
 
-<body data-building="LUTR">
+<body data-building="SERC">
         <!-- NavBar-->
     <nav class="navbar">
         <h1 class="navbar-title">Interactive Map of Campus</h1>
@@ -266,7 +33,7 @@
                             <li><a href="../TRIB/TRIB.HTML">(TRIB) Trible Library</a></li>
                         </ul>
                     </li>
-                    <li><a href="#">Search</a></li>
+                    <li><a href="#" id="nav-search-btn">Search</a></li>
                     <li><a href="#">About</a></li>
                 </ul>
             </li>
@@ -283,14 +50,71 @@
         <!--
             INFORMATION PANEL
         -->
-        <div class="room-info">
-            <h2 id="room-name">
-                Select a room
-            </h2>
+        <div class="room-info" id="information-panel">
 
-            <p id="room-description">
-                Click a room on the floorplan.
-            </p>
+            <!-- Original room-information view -->
+            <section id="room-info-view">
+                <h2 id="room-name">Select a room</h2>
+                <p id="room-description">Click a room on the floorplan.</p>
+            </section>
+
+            <!-- Search view: replaces the room information -->
+            <section id="search-info-view" hidden>
+                <h2>Search &amp; Filter</h2>
+                <p>Choose an option to find courses, instructors, rooms, or class times.</p>
+
+                <form id="course-search-form">
+                    <label for="filter-type">Search by:</label>
+                    <select id="filter-type" name="filterType">
+                        <option value="course">Course code</option>
+                        <option value="crn">CRN</option>
+                        <option value="instructor">Instructor</option>
+                        <option value="location">Building / location</option>
+                        <option value="room">Room ID</option>
+                        <option value="time">Class time</option>
+                    </select>
+
+                    <div id="query-field">
+                        <label for="filter-query" id="query-label">Course code:</label>
+                        <input
+                            type="search"
+                            id="filter-query"
+                            name="query"
+                            placeholder="e.g., CPSC 150"
+                        >
+                    </div>
+
+                    <div id="time-options" hidden>
+                        <label for="filter-day">Day of week:</label>
+                        <select id="filter-day" name="day">
+                            <option value="M">Monday</option>
+                            <option value="T">Tuesday</option>
+                            <option value="W">Wednesday</option>
+                            <option value="R">Thursday</option>
+                            <option value="F">Friday</option>
+                            <option value="S">Saturday</option>
+                            <option value="U">Sunday</option>
+                        </select>
+
+                        <label for="filter-time">Time (24-hour HHMM):</label>
+                        <input
+                            type="text"
+                            id="filter-time"
+                            name="time"
+                            placeholder="e.g., 1330"
+                            inputmode="numeric"
+                        >
+                    </div>
+
+                    <div class="search-panel-buttons">
+                        <button type="submit">Search</button>
+                        <button type="button" id="clear-search">Clear</button>
+                        <button type="button" id="back-to-room">Back to room info</button>
+                    </div>
+                </form>
+
+                <div id="search-results" aria-live="polite"></div>
+            </section>
 
         </div>
 
