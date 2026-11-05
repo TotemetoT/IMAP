@@ -1,5 +1,24 @@
 const RENDER_API_URL = "https://imap-bi2w.onrender.com";
 
+
+// Add coordinate tracking relative to SVG 1000x1000 viewBox
+function setupCoordinateTracker() {
+    const mouseX = document.getElementById("mouse-x");
+    const mouseY = document.getElementById("mouse-y");
+
+    document.querySelectorAll(".room-overlay").forEach(svg => {
+        svg.addEventListener("mousemove", (e) => {
+            const rect = svg.getBoundingClientRect();
+            // Scale screen pixels to 0-1000 SVG coordinates
+            const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000);
+            const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000);
+
+            if (mouseX) mouseX.textContent = x;
+            if (mouseY) mouseY.textContent = y;
+        });
+    });
+}
+
 // ============================================================
 // HELPER: GET CURRENT DAY CODE
 // M = Monday, T = Tuesday, W = Wednesday,
@@ -126,6 +145,7 @@ function showFloor(floorNumber) {
 document.addEventListener("DOMContentLoaded", () => {
     initializeRooms();
     setupSearchHandlers();
+    setupCoordinateTracker();
 });
 
 // Expose floor switching to window for HTML onclick attributes
@@ -271,7 +291,7 @@ function setupSearchHandlers() {
                 card.innerHTML = `
                     <strong>${item.course} - ${item.title}</strong><br>
                     <span>CRN: ${item.crn} | Room: ${item.location}</span><br>
-                    <span>Time: ⏰ ${formattedTime}</span><br>
+                    <span>Time: ${formattedTime}</span><br>
                     <small>Instructor: ${item.instructor || "N/A"}</small>
                 `;
                 searchResults.appendChild(card);
