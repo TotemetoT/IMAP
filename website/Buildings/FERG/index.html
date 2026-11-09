@@ -11,210 +11,11 @@
     <!-- <script>alert("Please Note:\n\nSome rooms may be labeled differently then they appear");</script> -->
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            margin: 0;
-            /* padding: 20px; */
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            overflow:hidden;
-        }
-
-        /*
-         * Main layout
-         *
-         * Information = roughly 20vw
-         * Floorplan   = roughly 80vw
-         */
-        .main-layout {
-            display: flex;
-            align-items: flex-start;
-            /* gap: 20px; */
-            width: 100%;
-        }
-
-        /*
-         * Information panel
-         */
-        .room-info {
-            width: 20vw;
-            min-width: 220px;
-
-            padding: 20px;
-
-            background: white;
-            border-radius: 8px;
-
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
-            position: sticky;
-            top: 20px;
-        }
-
-        .room-info h2 {
-            margin: 0 0 10px;
-        }
-
-        .room-info p {
-            margin: 0;
-            color: #666;
-            line-height: 1.5;
-
             overflow-y: scroll;
         }
-
-        /*
-         * Floorplan area
-         */
-        .floorplan-container {
-            position: relative;
-            width: 80vw;
-            height: 95vh;
-            max-width: calc(80vw - 20px);
-            max-height: calc(95vh - 20px);
-        }
-
-        /*
-         * Actual floorplan image
-         */
-        .floorplan-image {
-            display: block;
-
-            width: 80vw;
-            height: 95vh;
-            aspect-ratio: 1/1;
-            padding-right: 10vw;
-
-            /*
-             * Keeps the image square.
-             *
-             * Change this to "contain" if your source image
-             * isn't actually square and you don't want it cropped.
-             */
-        }
-
-        /*
-         * SVG sits exactly on top of the floorplan.
-         */
-        .room-overlay {
-            position: absolute;
-
-            top: 0;
-            left: 0;
-
-            width: 80vw;
-            height: 95vh;
-        }
-
-        /*
-         * Individual rooms
-         */
-        .room {
-            fill: rgba(0, 120, 255, 0.20);
-            stroke: rgba(0, 120, 255, 0.8);
-            stroke-width: 2;
-
-            cursor: pointer;
-
-            transition:
-                fill 0.15s ease,
-                stroke 0.15s ease;
-        }
-
-        .room:hover {
-            fill: rgba(0, 120, 255, 0.45);
-            stroke: #0066cc;
-        }
-
-        .room.selected {
-            fill: rgba(255, 170, 0, 0.50);
-            stroke: #ff9900;
-            stroke-width: 3;
-        }
-
-        /* TABLET / PHONE */
-        @media (max-width: 700px) {
-
-            body {
-                padding: 10px;
-                overflow-y: auto;
-            }
-
-            .main-layout {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                width: 100%;
-            }
-
-            /* Floor buttons come first */
-            .floor-buttons {
-                order: 1;
-                display: flex;
-                width: 100%;
-                justify-content: center;
-                gap: 5px;
-            }
-
-            /* Map comes second */
-            .floorplan-container {
-                order: 2;
-
-                width: 100%;
-                max-width: 100%;
-                height: auto;
-
-                aspect-ratio: 1 / 1;
-            }
-
-            /* Information comes last */
-            .room-info {
-                order: 3;
-
-                width: 100%;
-                min-width: 0;
-
-                position: static;
-
-                padding: 15px;
-            }
-
-            /* Make the floor buttons horizontal on phones */
-            .floor_button {
-                height: 45px;
-                width: auto;
-                flex: 1;
-
-                writing-mode: horizontal-tb;
-                text-orientation: initial;
-            }
-
-            /* Make the floorplan fit the phone width */
-            .floorplan-image {
-                width: 100%;
-                height: auto;
-                padding-right: 0;
-            }
-
-            .room-overlay {
-                width: 100%;
-                height: 100%;
-            }
-        }
-        
-        .floor {
-            display: none;
-        }
-
-        .floor.active {
-            display: block;
-        }
-
         .floor_button {
-            height: 30vh;
+            height: 45vh;
             width: 2vw;
             padding: 0;
             writing-mode: vertical-lr;
@@ -240,12 +41,10 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             pointer-events: none;
         }
-
-
     </style>
 </head>
 
-<body data-building="LUTR">
+<body data-building="FERG">
         <!-- NavBar-->
     <nav class="navbar">
         <h1 class="navbar-title">Interactive Map of Campus</h1>
@@ -309,86 +108,1013 @@
         <div class="floor-buttons">
             <button class="floor_button", onclick="showFloor(1)">Floor 1</button>
             <button class="floor_button", onclick="showFloor(2)">Floor 2</button>
-            <button class="floor_button", onclick="showFloor(3)">Floor 3</button>
         </div>
 
         <div class="floorplan-container">
 
             <!-- FLOOR 1 -->
             <div class="active floor" id="floor-1">
-                <img src="Floors/LUTR_1.png" class="floorplan-image">
+                <img src="Floors/FERG_1.jpg" class="floorplan-image">
                 <svg
                     class="room-overlay"
                     viewBox="0 0 1000 1000"
                     preserveAspectRatio="none"
                 >
 
-                    <!-- LUTR 105 -->
+                    <!-- FERG A157 -->
                     <polygon
                         class="room"
-                        data-room="105"
-                        data-name="LUTR 105"
+                        data-room="A157"
+                        data-name="FERG A157"
                         points="
-                            30,255
-                            100,255
-                            100,417
-                            30,417
+                            3,350
+                            3,407
+                            160,407
+                            160,350
                         "
                     />
+
+                    <!-- FERG A184 -->
+                    <polygon
+                        class="room"
+                        data-room="A184"
+                        data-name="FERG A184"
+                        points="
+                            163,350
+                            163,407
+                            252,407
+                            252,350
+                        "
+                    />
+
+                    <!-- FERG R108 -->
+                    <polygon
+                        class="room"
+                        data-room="R108"
+                        data-name="FERG R108"
+                        points="
+                            320,307
+                            320,342
+                            315,342
+                            315,357
+                            259,357
+                            259,307
+                        "
+                    />
+
+                    <!-- FERG R109 -->
+                    <polygon
+                        class="room"
+                        data-room="R109"
+                        data-name="FERG R109"
+                        points="
+                            259,304
+                            259,263
+                            315,263
+                            315,286
+                            320,286
+                            320,304
+                        "
+                    />
+
+                    <!-- FERG R110 -->
+                    <polygon
+                        class="room"
+                        data-room="R110"
+                        data-name="FERG R110"
+                        points="
+                            259,259
+                            259,213
+                            320,213
+                            320,239
+                            315,239
+                            315,259
+                        "
+                    />
+
+                    <!-- FERG R113 -->
+                    <polygon
+                        class="room"
+                        data-room="R113"
+                        data-name="FERG R113"
+                        points="
+                            219,153
+                            219,210
+                            172,210
+                            172,153
+                        "
+                    />
+
+                    <!-- FERG R112 -->
+                    <polygon
+                        class="room"
+                        data-room="R112"
+                        data-name="FERG R112"
+                        points="
+                            221,153
+                            221,210
+                            279,210
+                            279,153
+                        "
+                    />
+
+                    <!-- FERG R116 -->
+                    <polygon
+                        class="room"
+                        data-room="R116"
+                        data-name="FERG R116"
+                        points="
+                            208,94
+                            208,124
+                            265,124
+                            265,94
+                        "
+                    />
+
+                    <!-- FERG R117 -->
+                    <polygon
+                        class="room"
+                        data-room="R117"
+                        data-name="FERG R117"
+                        points="
+                            268,94
+                            268,124
+                            320,124
+                            320,94
+                        "
+                    />
+
+                    <!-- FERG R118 -->
+                    <polygon
+                        class="room"
+                        data-room="R118"
+                        data-name="FERG R118"
+                        points="
+                            173,15
+                            360,15
+                            360,91
+                            173,91
+                        "
+                    />
+
+                    <!-- FERG A182 -->
+                    <polygon
+                        class="room"
+                        data-room="A182"
+                        data-name="FERG A182"
+                        points="
+                            185,453
+                            309,453
+                            309,528
+                            185,528
+                        "
+                    />
+
+                    <!-- FERG A183 -->
+                    <polygon
+                        class="room"
+                        data-room="A183"
+                        data-name="FERG A183"
+                        points="
+                            311,453
+                            466,453
+                            466,519
+                            423,519
+                            423,528
+                            311,528
+                        "
+                    />
+
+                    <!-- FERG A168 -->
+                    <polygon
+                        class="room"
+                        data-room="A168"
+                        data-name="FERG A168"
+                        points="
+                            162,575
+                            162,598
+                            190,598
+                            190,575
+                        "
+                    />
+
+                    <!-- FERG A167 -->
+                    <polygon
+                        class="room"
+                        data-room="A167"
+                        data-name="FERG A167"
+                        points="
+                            191,575
+                            191,598
+                            219,598
+                            219,575
+                        "
+                    />
+
+                    <!-- FERG A166 -->
+                    <polygon
+                        class="room"
+                        data-room="A166"
+                        data-name="FERG A166"
+                        points="
+                            221,575
+                            221,598
+                            249,598
+                            249,575
+                        "
+                    />
+
+                    <!-- FERG A165 -->
+                    <polygon
+                        class="room"
+                        data-room="A165"
+                        data-name="FERG A165"
+                        points="
+                            251,575
+                            251,598
+                            279,598
+                            279,575
+                        "
+                    />
+
+                    <!-- FERG A164 -->
+                    <polygon
+                        class="room"
+                        data-room="A164"
+                        data-name="FERG A164"
+                        points="
+                            280,575
+                            280,598
+                            309,598
+                            309,575
+                        "
+                    />
+
+                    <!-- FERG A163 -->
+                    <polygon
+                        class="room"
+                        data-room="A163"
+                        data-name="FERG A163"
+                        points="
+                            311,575
+                            311,598
+                            338,598
+                            338,575
+                        "
+                    />
+
+                    <!-- FERG A162 -->
+                    <polygon
+                        class="room"
+                        data-room="A162"
+                        data-name="FERG A162"
+                        points="
+                            340,575
+                            340,598
+                            367,598
+                            367,575
+                        "
+                    />
+
+                    <!-- FERG A161 -->
+                    <polygon
+                        class="room"
+                        data-room="A161"
+                        data-name="FERG A161"
+                        points="
+                            370,575
+                            370,598
+                            394,598
+                            394,575
+                        "
+                    />
+
+                    <!-- FERG A160 -->
+                    <polygon
+                        class="room"
+                        data-room="A160"
+                        data-name="FERG A160"
+                        points="
+                            396,575
+                            396,598
+                            423,598
+                            423,575
+                        "
+                    />
+
+                    <!-- FERG A159 -->
+                    <polygon
+                        class="room"
+                        data-room="A159"
+                        data-name="FERG A159"
+                        points="
+                            425,575
+                            425,598
+                            465,598
+                            465,575
+                        "
+                    />
+
+                    <!-- FERG A171 -->
+                    <polygon
+                        class="room"
+                        data-room="A171"
+                        data-name="FERG A171"
+                        points="
+                            191,530
+                            191,556
+                            219,556
+                            219,530
+                        "
+                    />
+
+                    <!-- FERG A172 -->
+                    <polygon
+                        class="room"
+                        data-room="A172"
+                        data-name="FERG A172"
+                        points="
+                            221,530
+                            221,556
+                            249,556
+                            249,530
+                        "
+                    />
+
+                    <!-- FERG A173 -->
+                    <polygon
+                        class="room"
+                        data-room="A173"
+                        data-name="FERG A173"
+                        points="
+                            252,530
+                            252,556
+                            279,556
+                            279,530
+                        "
+                    />
+
+                    <!-- FERG A174 -->
+                    <polygon
+                        class="room"
+                        data-room="A174"
+                        data-name="FERG A174"
+                        points="
+                            281,530
+                            281,556
+                            308,556
+                            308,530
+                        "
+                    />
+
+                    <!-- FERG A175 -->
+                    <polygon
+                        class="room"
+                        data-room="A175"
+                        data-name="FERG A175"
+                        points="
+                            310,530
+                            310,556
+                            338,556
+                            338,530
+                        "
+                    />
+
+                    <!-- FERG A176 -->
+                    <polygon
+                        class="room"
+                        data-room="A176"
+                        data-name="FERG A176"
+                        points="
+                            340,530
+                            340,556
+                            367,556
+                            367,530
+                        "
+                    />
+
+                    <!-- FERG A177 -->
+                    <polygon
+                        class="room"
+                        data-room="A177"
+                        data-name="FERG A177"
+                        points="
+                            370,530
+                            370,556
+                            395,556
+                            395,530
+                        "
+                    />
+
+                    <!-- FERG A178 -->
+                    <polygon
+                        class="room"
+                        data-room="A178"
+                        data-name="FERG A178"
+                        points="
+                            396,530
+                            396,556
+                            423,556
+                            423,530
+                        "
+                    />
+
+                    <!-- FERG A179 -->
+                    <polygon
+                        class="room"
+                        data-room="A179"
+                        data-name="FERG A179"
+                        points="
+                            424,520
+                            424,556
+                            467,556
+                            467,520
+                        "
+                    />
+
+                    <!-- FERG R106 -->
+                    <polygon
+                        class="room"
+                        data-room="R106"
+                        data-name="FERG R106"
+                        points="
+                            343,215
+                            343,412
+                            567,412
+                            567,215
+                        "
+                    />
+
+                    <!-- FERG A152 -->
+                    <polygon
+                        class="room"
+                        data-room="A152"
+                        data-name="FERG A152"
+                        points="
+                            508,507
+                            508,542
+                            567,542
+                            567,507
+                        "
+                    />
+
+                    <!-- FERG A151 -->
+                    <polygon
+                        class="room"
+                        data-room="A151"
+                        data-name="FERG A151"
+                        points="
+                            522,544
+                            522,585
+                            567,585
+                            567,544
+                        "
+                    />
+
+                    <!-- FERG A150 -->
+                    <polygon
+                        class="room"
+                        data-room="A150"
+                        data-name="FERG A150"
+                        points="
+                            522,587
+                            522,638
+                            567,638
+                            567,587
+                        "
+                    />
+
+                    <!-- FERG A149 -->
+                    <polygon
+                        class="room"
+                        data-room="A149"
+                        data-name="FERG A149"
+                        points="
+                            508,643
+                            508,681
+                            567,681
+                            567,643
+                        "
+                    />
+
+                    <!-- FERG A148 -->
+                    <polygon
+                        class="room"
+                        data-room="A148"
+                        data-name="FERG A148"
+                        points="
+                            508,683
+                            508,720
+                            567,720
+                            567,683
+                        "
+                    />
+
+                    <!-- FERG A146 -->
+                    <polygon
+                        class="room"
+                        data-room="A146"
+                        data-name="FERG A146"
+                        points="
+                            522,724
+                            522,760
+                            567,760
+                            567,724
+                        "
+                    />
+
+                    <!-- FERG A108 -->
+                    <polygon
+                        class="room"
+                        data-room="A108"
+                        data-name="FERG A108"
+                        points="
+                            106,804
+                            129,804
+                            129,840
+                            123,840
+                            123,863
+                            106,863
+                        "
+                    />
+
+                    <!-- FERG A111 -->
+                    <polygon
+                        class="room"
+                        data-room="A111"
+                        data-name="FERG A111"
+                        points="
+                            130,804
+                            161,804
+                            161,863
+                            125,863
+                            125,842
+                            130,842
+                        "
+                    />
+
+                    <!-- FERG A112 -->
+                    <polygon
+                        class="room"
+                        data-room="A112"
+                        data-name="FERG A112"
+                        points="
+                            163,833
+                            163,864
+                            197,864
+                            197,833
+                        "
+                    />
+
+                    <!-- FERG A113 -->
+                    <polygon
+                        class="room"
+                        data-room="A113"
+                        data-name="FERG A113"
+                        points="
+                            199,833
+                            199,864
+                            235,864
+                            235,833
+                        "
+                    />
+
+                    <!-- FERG A114 -->
+                    <polygon
+                        class="room"
+                        data-room="A114"
+                        data-name="FERG A114"
+                        points="
+                            238,833
+                            238,864
+                            274,864
+                            274,833
+                        "
+                    />
+
+                    <!-- FERG A115 -->
+                    <polygon
+                        class="room"
+                        data-room="A1"
+                        data-name="FERG A115"
+                        points="
+                            276,833
+                            276,864
+                            312,864
+                            312,833
+                        "
+                    />
+
+                    <!-- FERG A120 -->
+                    <polygon
+                        class="room"
+                        data-room="A120"
+                        data-name="FERG A120"
+                        points="
+                            314,837
+                            314,864
+                            353,864
+                            353,837
+                        "
+                    />
+
+                    <!-- FERG A119 -->
+                    <polygon
+                        class="room"
+                        data-room="A119"
+                        data-name="FERG A119"
+                        points="
+                            313,803
+                            313,832
+                            343,832
+                            343,803
+                        "
+                    />
+
+                    <!-- FERG A121 -->
+                    <polygon
+                        class="room"
+                        data-room="A121"
+                        data-name="FERG A121"
+                        points="
+                            354,837
+                            354,864
+                            389,864
+                            389,837
+                        "
+                    />
+
+                    <!-- FERG A122 -->
+                    <polygon
+                        class="room"
+                        data-room="A122"
+                        data-name="FERG A122"
+                        points="
+                            392,837
+                            392,864
+                            428,864
+                            428,837
+                        "
+                    />
+
+                     <!-- FERG A123 -->
+                    <polygon
+                        class="room"
+                        data-room="A123"
+                        data-name="FERG A123"
+                        points="
+                            429,802
+                            429,864
+                            466,864
+                            466,802
+                        "
+                    />
+
+                     <!-- FERG A196 -->
+                    <polygon
+                        class="room"
+                        data-room="A196"
+                        data-name="FERG A196"
+                        points="
+                            15,526
+                            79,526
+                            79,697
+                            52,697
+                            52,718
+                            15,718
+                        "
+                    />
+
+                     <!-- FERG A197 -->
+                    <polygon
+                        class="room"
+                        data-room="A197"
+                        data-name="FERG A197"
+                        points="
+                            83,526
+                            157,526
+                            157,698
+                            83,698
+                        "
+                    />
+
+                     <!-- FERG A198 -->
+                    <polygon
+                        class="room"
+                        data-room="A198"
+                        data-name="FERG A198"
+                        points="
+                            13,452
+                            157,452
+                            157,521
+                            13,521
+                        "
+                    />
+
+                     <!-- FERG A195 -->
+                    <polygon
+                        class="room"
+                        data-room="A195"
+                        data-name="FERG A195"
+                        points="
+                            13,723
+                            50,723
+                            50,761
+                            13,761
+                        "
+                    />
+
+                     <!-- FERG A141 -->
+                    <polygon
+                        class="room"
+                        data-room="A141"
+                        data-name="FERG A141"
+                        points="
+                            161,702
+                            198,702
+                            198,761
+                            161,761
+                        "
+                    />
+
+                     <!-- FERG A140 -->
+                    <polygon
+                        class="room"
+                        data-room="A140"
+                        data-name="FERG A140"
+                        points="
+                            200,702
+                            233,702
+                            233,748
+                            200,748
+                        "
+                    />
+
+                     <!-- FERG A139 -->
+                    <polygon
+                        class="room"
+                        data-room="A139"
+                        data-name="FERG A139"
+                        points="
+                            235,702
+                            274,702
+                            274,729
+                            235,729
+                        "
+                    />
+
+                     <!-- FERG A138 -->
+                    <polygon
+                        class="room"
+                        data-room="A138"
+                        data-name="FERG A138"
+                        points="
+                            276,702
+                            312,702
+                            312,729
+                            276,729
+                        "
+                    />
+
+                     <!-- FERG A137 -->
+                    <polygon
+                        class="room"
+                        data-room="A137"
+                        data-name="FERG A137"
+                        points="
+                            348,702
+                            313,702
+                            313,729
+                            348,729
+                        "
+                    />
+
+                     <!-- FERG A136 -->
+                    <polygon
+                        class="room"
+                        data-room="A136"
+                        data-name="FERG A136"
+                        points="
+                            350,702
+                            386,702
+                            386,729
+                            350,729
+                        "
+                    />
+
+                     <!-- FERG A135 -->
+                    <polygon
+                        class="room"
+                        data-room="A135"
+                        data-name="FERG A135"
+                        points="
+                            350,740
+                            361,740
+                            361,731
+                            387,731
+                            387,760
+                            350,760
+                        "
+                    />
+
+                     <!-- FERG A130 -->
+                    <polygon
+                        class="room"
+                        data-room="A130"
+                        data-name="FERG A130"
+                        points="
+                            388,701
+                            425,701
+                            425,761
+                            388,761
+                        "
+                    />
+
+                     <!-- FERG T177 -->
+                    <polygon
+                        class="room"
+                        data-room="T177"
+                        data-name="FERG T177"
+                        points="
+                            655,449
+                            792,449
+                            792,516
+                            655,516
+                        "
+                    />
+
+                     <!-- FERG T107 -->
+                    <polygon
+                        class="room"
+                        data-room="T107"
+                        data-name="FERG T107"
+                        points="
+                            670,700
+                            838,700
+                            838,597
+                            670,597
+                        "
+                    />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 </svg>
             </div>
 
             <!-- FLOOR 2 -->
             <div class="floor" id="floor-2">
-                <img src="Floors/LUTR_2.png" class="floorplan-image">
+                <img src="Floors/FERG_2.jpg" class="floorplan-image">
 
                 <svg 
                     class="room-overlay"
                     viewBox="0 0 1000 1000"
                     preserveAspectRatio="none"
                 >
-                    <!-- LUTR 204 -->
+                    <!-- FERG 201 -->
                     <polygon
                         class="room"
-                        data-room="204"
-                        data-name="LUTR 204"
+                        data-room="201"
+                        data-name="FERG 201"
                         points="
-                            10,275
-                            78,275
-                            78,398
-                            10,398
+                            10,538
+                            53,538
+                            53,549
+                            123,549
+                            123,971
+                            10,971
                         "
                     />
 
-                </svg>
-            </div>
-
-            <!-- FLOOR 3 -->
-            <div class="floor" id="floor-3">
-                <img src="Floors/LUTR_3.png" class="floorplan-image">
-
-                <svg 
-                    class="room-overlay"
-                    viewBox="0 0 1000 1000"
-                    preserveAspectRatio="none"
-                >
-                    <!-- LUTR 301 -->
+                    <!-- FERG 220 -->
                     <polygon
                         class="room"
-                        data-room="301"
-                        data-name="LUTR 301"
+                        data-room="220"
+                        data-name="FERG 220"
                         points="
-                            12,54
-                            36,54
-                            36,42
-                            99,42
-                            99,191
-                            83,191
-                            72,205
-                            12,205
+                            169,546
+                            287,546
+                            287,830
+                            169,830
                         "
                     />
+
+                    <!-- FERG 221 -->
+                    <polygon
+                        class="room"
+                        data-room="221"
+                        data-name="FERG 221"
+                        points="
+                            405,546
+                            289,546
+                            289,830
+                            405,830
+                        "
+                    />
+
+                    <!-- FERG 222 -->
+                    <polygon
+                        class="room"
+                        data-room="222"
+                        data-name="FERG 222"
+                        points="
+                            408,546
+                            581,546
+                            581,830
+                            408,830
+                        "
+                    />
+
+                    <!-- FERG 223 -->
+                    <polygon
+                        class="room"
+                        data-room="223"
+                        data-name="FERG 223"
+                        points="
+                            584,546
+                            758,546
+                            758,830
+                            584,830
+                        "
+                    />
+
+                    <!-- FERG 213 -->
+                    <polygon
+                        class="room"
+                        data-room="213"
+                        data-name="FERG 213"
+                        points="
+                            584,332
+                            584,49
+                            757,49
+                            757,332
+                        "
+                    />
+
+                    <!-- FERG 210 -->
+                    <polygon
+                        class="room"
+                        data-room="210"
+                        data-name="FERG 210"
+                        points="
+                            523,332
+                            523,49
+                            349,49
+                            349,332
+                        "
+                    />
+
+                    <!-- FERG 208 -->
+                    <polygon
+                        class="room"
+                        data-room="208"
+                        data-name="FERG 208"
+                        points="
+                            345,332
+                            345,49
+                            231,49
+                            231,332
+                        "
+                    />
+
+                    <!-- FERG 207 -->
+                    <polygon
+                        class="room"
+                        data-room="207"
+                        data-name="FERG 207"
+                        points="
+                            228,332
+                            228,49
+                            112,49
+                            112,332
+                        "
+                    />
+
+
 
                 </svg>
             </div>
