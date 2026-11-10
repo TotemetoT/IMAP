@@ -1,16 +1,12 @@
 const RENDER_API_URL = "https://imap-bi2w.onrender.com";
 
-// ============================================================
-// HELPER: GET CURRENT DAY CODE
-// M = Monday, T = Tuesday, W = Wednesday,
-// R = Thursday, F = Friday, S = Saturday, U = Sunday.
-// ============================================================
+// Helper: Get Current Day Code (M, T, W, R, F, S, U)
 function getTodayCode() {
     const day = new Date().getDay();
     return ["U", "M", "T", "W", "R", "F", "S"][day];
 }
 
-// Converts "0800-0850" to "08:00 - 08:50" or single "0800" to "08:00"
+// Converts HHMM ranges like "0800-0850" to "08:00 - 08:50"
 function formatTimeRange(timeStr) {
     if (!timeStr) return "N/A";
 
@@ -32,7 +28,7 @@ function formatTimeRange(timeStr) {
     return formatHHMM(timeStr);
 }
 
-// Track mouse coordinates relative to SVG 1000x1000 viewBox
+// Coordinate tracker relative to SVG viewBox
 function setupCoordinateTracker() {
     const mouseX = document.getElementById("mouse-x");
     const mouseY = document.getElementById("mouse-y");
@@ -89,36 +85,45 @@ async function updateRoomInformation(room) {
 
         roomDescription.replaceChildren();
 
-        // 1. Faculty Office Details (if applicable)
+        // 1. Render Faculty Office Occupants with all requested fields
         if (professors.length > 0) {
             const profHeading = document.createElement("strong");
-            profHeading.textContent = "Faculty Office Occupants:";
+            profHeading.textContent = "Faculty Office Occupant(s):";
             roomDescription.appendChild(profHeading);
 
             professors.forEach(prof => {
                 const entry = document.createElement("div");
                 entry.className = "room-prof";
                 entry.style.margin = "8px 0";
-                entry.style.padding = "8px";
+                entry.style.padding = "10px";
                 entry.style.background = "#eef6ff";
                 entry.style.borderLeft = "4px solid #0056b3";
                 entry.style.borderRadius = "4px";
 
                 entry.innerHTML = `
-                    <strong>${prof.name}</strong><br>
-                    <small>Dept: ${prof.department || "N/A"}</small><br>
-                    <small>College: ${prof.college || "N/A"}</small><br>
-                    ${prof.email ? `<small><a href="mailto:${prof.email}">${prof.email}</a></small>` : ""}
+                    <div style="font-size: 1.05em; font-weight: bold; margin-bottom: 4px;">${prof.name}</div>
+                    <div style="font-size: 0.9em; color: #333; margin-bottom: 2px;">
+                        <strong>Email:</strong> ${prof.email ? `<a href="mailto:${prof.email}">${prof.email}</a>` : "N/A"}
+                    </div>
+                    <div style="font-size: 0.9em; color: #333; margin-bottom: 2px;">
+                        <strong>Department:</strong> ${prof.department || "N/A"}
+                    </div>
+                    <div style="font-size: 0.9em; color: #333; margin-bottom: 2px;">
+                        <strong>College:</strong> ${prof.college || "N/A"}
+                    </div>
+                    <div style="font-size: 0.9em; color: #333;">
+                        <strong>CNU Website:</strong> ${prof.website ? `<a href="${prof.website}" target="_blank" rel="noopener noreferrer">Profile Link</a>` : "N/A"}
+                    </div>
                 `;
                 roomDescription.appendChild(entry);
             });
         }
 
-        // 2. Today's Class Schedule (if applicable)
+        // 2. Render Today's Scheduled Classes
         if (classes.length > 0) {
             const heading = document.createElement("strong");
             heading.textContent = "Today's Classes:";
-            heading.style.marginTop = "12px";
+            heading.style.marginTop = "14px";
             heading.style.display = "block";
             roomDescription.appendChild(heading);
 
@@ -157,18 +162,18 @@ function initializeRooms() {
         room.addEventListener("click", function (e) {
             e.stopPropagation();
 
-            // Remove selection state from all rooms across all floors
+            // Clear previous room selection across all floor SVG overlays
             document.querySelectorAll(".room.selected").forEach(r => r.classList.remove("selected"));
 
-            // Highlight clicked room polygon
+            // Highlight newly clicked room polygon
             this.classList.add("selected");
 
-            // Update sidebar room & professor information
+            // Update sidebar content
             updateRoomInformation(this);
         });
     });
 
-    console.log(`Initialized click handlers for ${rooms.length} room polygon elements.`);
+    console.log(`Initialized click handlers for ${rooms.length} rooms.`);
 }
 
 // ============================================================
@@ -185,11 +190,11 @@ function showFloor(floorNumber) {
     }
 }
 
-// Expose showFloor globally so inline HTML onclick="showFloor(n)" attributes work properly
+// Bind showFloor globally to support inline onclick="showFloor(n)" in HTML
 window.showFloor = showFloor;
 
 // ============================================================
-// SEARCH PANEL CONTROLLER
+// SEARCH PANEL VIEW CONTROLLER
 // ============================================================
 function setupSearchHandlers() {
     const navSearchBtn = document.getElementById("nav-search-btn");
@@ -206,7 +211,6 @@ function setupSearchHandlers() {
 
     if (!searchForm) return;
 
-    // Open Search View
     if (navSearchBtn) {
         navSearchBtn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -215,7 +219,6 @@ function setupSearchHandlers() {
         });
     }
 
-    // Close Search View (Back to Room Info)
     if (backToRoomBtn) {
         backToRoomBtn.addEventListener("click", () => {
             searchInfoView.hidden = true;
@@ -223,7 +226,6 @@ function setupSearchHandlers() {
         });
     }
 
-    // Toggle input labels based on filter selection
     if (filterTypeSelect) {
         filterTypeSelect.addEventListener("change", () => {
             const val = filterTypeSelect.value;
@@ -249,7 +251,6 @@ function setupSearchHandlers() {
         });
     }
 
-    // Clear search form
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener("click", () => {
             searchForm.reset();
@@ -258,7 +259,6 @@ function setupSearchHandlers() {
         });
     }
 
-    // Execute Search Request
     searchForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -297,17 +297,19 @@ function setupSearchHandlers() {
                 const card = document.createElement("div");
                 card.className = "search-result-card";
                 card.style.marginTop = "10px";
-                card.style.padding = "8px";
+                card.style.padding = "10px";
                 card.style.background = item.result_type === "professor" ? "#eef6ff" : "#f0f4f8";
                 if (item.result_type === "professor") card.style.borderLeft = "4px solid #0056b3";
                 card.style.borderRadius = "4px";
 
                 if (item.result_type === "professor") {
                     card.innerHTML = `
-                        <strong>${item.name}</strong><br>
-                        <span>Office: ${item.office || "N/A"}</span><br>
-                        <small>Dept: ${item.department || "N/A"}</small><br>
-                        <small>College: ${item.college || "N/A"}</small>
+                        <div style="font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">${item.name}</div>
+                        <div><strong>Office:</strong> ${item.office || "N/A"}</div>
+                        <div><strong>Email:</strong> ${item.email ? `<a href="mailto:${item.email}">${item.email}</a>` : "N/A"}</div>
+                        <div><strong>Department:</strong> ${item.department || "N/A"}</div>
+                        <div><strong>College:</strong> ${item.college || "N/A"}</div>
+                        <div><strong>CNU Website:</strong> ${item.website ? `<a href="${item.website}" target="_blank" rel="noopener noreferrer">Profile Link</a>` : "N/A"}</div>
                     `;
                 } else {
                     const formattedTime = formatTimeRange(item.time);
@@ -328,9 +330,7 @@ function setupSearchHandlers() {
     });
 }
 
-// ============================================================
-// INITIALIZATION ON DOM READY
-// ============================================================
+// Initialize script once DOM content is ready
 document.addEventListener("DOMContentLoaded", () => {
     initializeRooms();
     setupSearchHandlers();
