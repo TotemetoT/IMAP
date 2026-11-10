@@ -13,12 +13,24 @@ class Course:
         self.location = row[9]
         self.instructor = row[10]
 
-def Load_CSV():
+class Prof:
+    def __init__(self, row):
+        self.row = row
+        self.prof = row[0]
+        self.office = row[1]
+        self.department = row[2]
+        self.college = row[3]
+        self.email = row[4]
+        self.website = row[5]
+
+
+def C_Load_CSV():
     """
     Loads the CSV without courses that are not in person:
     ARR, HYB, ASY, etc. 
     
-    @return: List of rows of SYN classes"""
+    @return: List of rows of SYN classes
+    """
     fname = cfg.COURSE_PATH
     rows = []
     with open(fname, "r") as f:
@@ -29,12 +41,13 @@ def Load_CSV():
                 rows.append(Course(row))
     return rows
 
-def Full_Load_CSV():
+def C_Full_Load_CSV():
     """
     Loads the CSV with courses that are not in person:
     ARR, HYB, ASY, etc. 
     
-    @return: List of rows of SYN classes"""
+    @return: List of rows of SYN classes
+    """
     fname = cfg.COURSE_PATH
     rows = []
     with open(fname, "r") as f:
@@ -42,4 +55,14 @@ def Full_Load_CSV():
         next(reader) 
         for row in reader:
             rows.append(Course(row))
+    return rows
+
+def P_Load_CSV():
+    fname = cfg.PROF_PATH
+    rows = []
+    with open(fname, "r") as f:
+        reader = csv.reader(f)
+        next(reader)
+        for row in reader:
+            rows.append(Prof(row))
     return rows
