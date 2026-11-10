@@ -7,14 +7,14 @@ import filter as f
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    cfg.COURSES = dl.Load_CSV()
-    cfg.FULL_COURSES = dl.Full_Load_CSV()
-    print(f"Loaded {len(cfg.COURSES)} courses into memory.")
+    cfg.COURSES = dl.C_Load_CSV()
+    cfg.FULL_COURSES = dl.C_Full_Load_CSV()
+    cfg.PROFS = dl.P_Load_CSV()
+    print(f"Loaded {len(cfg.COURSES)} courses and {len(cfg.PROFS)} professors into memory.")
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-# Add CORS Middleware at the very top of app configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,8 +35,6 @@ def get_room_times(
 ):
     search_id = fullRoomId.strip().upper()
     room_number = search_id.split()[-1] if " " in search_id else search_id
-    
-    # If building isn't provided separately, try extracting it from fullRoomId (e.g., "TFAC 102")
     building_prefix = building.upper() if building else (search_id.split()[0] if " " in search_id else "")
 
     matching_courses = []
@@ -44,10 +42,8 @@ def get_room_times(
     for course in cfg.COURSES:
         c_location = str(getattr(course, "location", "") or "").upper()
         c_days = str(getattr(course, "days", "") or "")
-
         locations = [x.strip() for x in c_location.split(";")]
 
-        # Ensure matching requires BOTH the building prefix and the room number
         location_matches = False
         for loc in locations:
             if building_prefix and building_prefix in loc and room_number in loc:
@@ -67,6 +63,33 @@ def get_room_times(
                 "location": str(getattr(course, "location", "") or "")
             })
 
+    # Professor Office Lookup for this room
+    professors = []
+    for prof in cfg.PROFS:
+        p_office = str(getattr(prof, "office", "") or "").upper().strip()
+        if not p_office:
+            continue
+        if building_prefix:
+            target_str = f"{building_prefix} {room_number}".upper()
+            if target_str in p_office or p_office == target_str:
+                professors.append({
+                    "name": prof.prof,
+                    "office": prof.office,
+                    "department": prof.department,
+                    "college": prof.college,
+                    "email": prof.email,
+                    "website": prof.website
+                })
+        elif search_id in p_office or room_number in p_office:
+            professors.append({
+                "name": prof.prof,
+                "office": prof.office,
+                "department": prof.department,
+                "college": prof.college,
+                "email": prof.email,
+                "website": prof.website
+            })
+
     try:
         raw_times = f.RoomTimes(room_number, day)
     except Exception:
@@ -75,7 +98,8 @@ def get_room_times(
     return {
         "room": search_id,
         "times": raw_times,
-        "classes": matching_courses
+        "classes": matching_courses,
+        "professors": professors
     }
 
 @app.get("/api/search")
@@ -89,30 +113,100 @@ def search_courses(
     
     if type == "course":
         courses = f.Course(query)
+        for course in courses:
+            results.append({
+                "result_type": "course",
+                "course": str(getattr(course, "course", "") or ""),
+                "title": str(getattr(course, "title", "") or ""),
+                "instructor": str(getattr(course, "instructor", "") or ""),
+                "crn": str(getattr(course, "CRN", "") or ""),
+                "time": str(getattr(course, "time", "") or ""),
+                "location": str(getattr(course, "location", "") or "")
+            })
     elif type == "crn":
         match = f.CRN(query)
-        courses = [match] if match else []
+        if match:
+            results.append({
+                "result_type": "course",
+                "course": str(getattr(match, "course", "") or ""),
+                "title": str(getattr(match, "title", "") or ""),
+                "instructor": str(getattr(match, "instructor", "") or ""),
+                "crn": str(getattr(match, "CRN", "") or ""),
+                "time": str(getattr(match, "time", "") or ""),
+                "location": str(getattr(match, "location", "") or "")
+            })
     elif type == "instructor":
         courses = f.Instructor(query)
-    elif type == "location" or type == "room":
+        for course in courses:
+            results.append({
+                "result_type": "course",
+                "course": str(getattr(course, "course", "") or ""),
+                "title": str(getattr(course, "title", "") or ""),
+                "instructor": str(getattr(course, "instructor", "") or ""),
+                "crn": str(getattr(course, "CRN", "") or ""),
+                "time": str(getattr(course, "time", "") or ""),
+                "location": str(getattr(course, "location", "") or "")
+            })
+    elif type in ("location", "room"):
         courses = f.Location(query)
+        for course in courses:
+            results.append({
+                "result_type": "course",
+                "course": str(getattr(course, "course", "") or ""),
+                "title": str(getattr(course, "title", "") or ""),
+                "instructor": str(getattr(course, "instructor", "") or ""),
+                "crn": str(getattr(course, "CRN", "") or ""),
+                "time": str(getattr(course, "time", "") or ""),
+                "location": str(getattr(course, "location", "") or "")
+            })
+    elif type == "department":
+        profs = f.ProfessorDepartment(query)
+        for p in profs:
+            results.append({
+                "result_type": "professor",
+                "name": p.prof,
+                "office": p.office,
+                "department": p.department,
+                "college": p.college,
+                "email": p.email,
+                "website": p.website
+            })
+    elif type == "college":
+        profs = f.ProfessorCollege(query)
+        for p in profs:
+            results.append({
+                "result_type": "professor",
+                "name": p.prof,
+                "office": p.office,
+                "department": p.department,
+                "college": p.college,
+                "email": p.email,
+                "website": p.website
+            })
+    elif type == "office":
+        profs = f.ProfessorOffice(query)
+        for p in profs:
+            results.append({
+                "result_type": "professor",
+                "name": p.prof,
+                "office": p.office,
+                "department": p.department,
+                "college": p.college,
+                "email": p.email,
+                "website": p.website
+            })
     elif type == "time":
         if time and day:
             used, _ = f.Time(time, day)
-            courses = used
-        else:
-            courses = []
-    else:
-        courses = []
-
-    for course in courses:
-        results.append({
-            "course": str(getattr(course, "course", "") or ""),
-            "title": str(getattr(course, "title", "") or ""),
-            "instructor": str(getattr(course, "instructor", "") or ""),
-            "crn": str(getattr(course, "CRN", "") or ""),
-            "time": str(getattr(course, "time", "") or ""),
-            "location": str(getattr(course, "location", "") or "")
-        })
+            for course in used:
+                results.append({
+                    "result_type": "course",
+                    "course": str(getattr(course, "course", "") or ""),
+                    "title": str(getattr(course, "title", "") or ""),
+                    "instructor": str(getattr(course, "instructor", "") or ""),
+                    "crn": str(getattr(course, "CRN", "") or ""),
+                    "time": str(getattr(course, "time", "") or ""),
+                    "location": str(getattr(course, "location", "") or "")
+                })
 
     return {"results": results}

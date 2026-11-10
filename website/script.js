@@ -1,24 +1,5 @@
 const RENDER_API_URL = "https://imap-bi2w.onrender.com";
 
-
-// Add coordinate tracking relative to SVG 1000x1000 viewBox
-function setupCoordinateTracker() {
-    const mouseX = document.getElementById("mouse-x");
-    const mouseY = document.getElementById("mouse-y");
-
-    document.querySelectorAll(".room-overlay").forEach(svg => {
-        svg.addEventListener("mousemove", (e) => {
-            const rect = svg.getBoundingClientRect();
-            // Scale screen pixels to 0-1000 SVG coordinates
-            const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000);
-            const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000);
-
-            if (mouseX) mouseX.textContent = x;
-            if (mouseY) mouseY.textContent = y;
-        });
-    });
-}
-
 // ============================================================
 // HELPER: GET CURRENT DAY CODE
 // M = Monday, T = Tuesday, W = Wednesday,
@@ -29,9 +10,47 @@ function getTodayCode() {
     return ["U", "M", "T", "W", "R", "F", "S"][day];
 }
 
+// Converts "0800-0850" to "08:00 - 08:50" or single "0800" to "08:00"
+function formatTimeRange(timeStr) {
+    if (!timeStr) return "N/A";
+
+    const formatHHMM = (hhmm) => {
+        const clean = hhmm.trim();
+        if (clean.length === 4) {
+            return `${clean.slice(0, 2)}:${clean.slice(2)}`;
+        }
+        return clean;
+    };
+
+    if (timeStr.includes("-")) {
+        return timeStr
+            .split("-")
+            .map(t => formatHHMM(t))
+            .join(" - ");
+    }
+
+    return formatHHMM(timeStr);
+}
+
+// Track mouse coordinates relative to SVG 1000x1000 viewBox
+function setupCoordinateTracker() {
+    const mouseX = document.getElementById("mouse-x");
+    const mouseY = document.getElementById("mouse-y");
+
+    document.querySelectorAll(".room-overlay").forEach(svg => {
+        svg.addEventListener("mousemove", (e) => {
+            const rect = svg.getBoundingClientRect();
+            const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000);
+            const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000);
+
+            if (mouseX) mouseX.textContent = x;
+            if (mouseY) mouseY.textContent = y;
+        });
+    });
+}
 
 // ============================================================
-// FETCH & DISPLAY ROOM INFORMATION FROM PYTHON BACKEND
+// FETCH & DISPLAY ROOM / PROFESSOR INFORMATION
 // ============================================================
 async function updateRoomInformation(room) {
     const roomName = document.getElementById("room-name");
@@ -48,7 +67,7 @@ async function updateRoomInformation(room) {
     }
 
     roomName.textContent = fullRoomId;
-    roomDescription.textContent = "Loading schedule...";
+    roomDescription.textContent = "Loading schedule and office information...";
 
     try {
         const response = await fetch(
@@ -60,44 +79,73 @@ async function updateRoomInformation(room) {
         }
 
         const data = await response.json();
-        const classes = data.classes;
+        const classes = data.classes || [];
+        const professors = data.professors || [];
 
-        if (!classes || classes.length === 0) {
-            roomDescription.textContent = "No classes scheduled today.";
+        if (classes.length === 0 && professors.length === 0) {
+            roomDescription.textContent = "No classes scheduled or faculty offices assigned to this room.";
             return;
         }
 
         roomDescription.replaceChildren();
 
-        const heading = document.createElement("strong");
-        heading.textContent = "Today's Classes";
-        roomDescription.appendChild(heading);
+        // 1. Faculty Office Details (if applicable)
+        if (professors.length > 0) {
+            const profHeading = document.createElement("strong");
+            profHeading.textContent = "Faculty Office Occupants:";
+            roomDescription.appendChild(profHeading);
 
-        classes.forEach(item => {
-            const entry = document.createElement("div");
-            entry.className = "room-class";
-            entry.style.marginTop = "10px";
-            entry.style.padding = "8px";
-            entry.style.background = "#f0f4f8";
-            entry.style.borderRadius = "4px";
+            professors.forEach(prof => {
+                const entry = document.createElement("div");
+                entry.className = "room-prof";
+                entry.style.margin = "8px 0";
+                entry.style.padding = "8px";
+                entry.style.background = "#eef6ff";
+                entry.style.borderLeft = "4px solid #0056b3";
+                entry.style.borderRadius = "4px";
 
-            // Format the raw HHMM time range here
-            const formattedTime = formatTimeRange(item.time);
+                entry.innerHTML = `
+                    <strong>${prof.name}</strong><br>
+                    <small>Dept: ${prof.department || "N/A"}</small><br>
+                    <small>College: ${prof.college || "N/A"}</small><br>
+                    ${prof.email ? `<small><a href="mailto:${prof.email}">${prof.email}</a></small>` : ""}
+                `;
+                roomDescription.appendChild(entry);
+            });
+        }
 
-            entry.innerHTML = `
-                <strong>${formattedTime}</strong><br>
-                <span>${item.course} - ${item.title}</span><br>
-                <small>Instructor: ${item.instructor || "N/A"}</small>
-            `;
-            roomDescription.appendChild(entry);
-        });
+        // 2. Today's Class Schedule (if applicable)
+        if (classes.length > 0) {
+            const heading = document.createElement("strong");
+            heading.textContent = "Today's Classes:";
+            heading.style.marginTop = "12px";
+            heading.style.display = "block";
+            roomDescription.appendChild(heading);
+
+            classes.forEach(item => {
+                const entry = document.createElement("div");
+                entry.className = "room-class";
+                entry.style.marginTop = "8px";
+                entry.style.padding = "8px";
+                entry.style.background = "#f0f4f8";
+                entry.style.borderRadius = "4px";
+
+                const formattedTime = formatTimeRange(item.time);
+
+                entry.innerHTML = `
+                    <strong>${formattedTime}</strong><br>
+                    <span>${item.course} - ${item.title}</span><br>
+                    <small>Instructor: ${item.instructor || "N/A"}</small>
+                `;
+                roomDescription.appendChild(entry);
+            });
+        }
 
     } catch (error) {
         console.error("Error fetching room details from Python API:", error);
-        roomDescription.textContent = "Unable to fetch class schedule.";
+        roomDescription.textContent = "Unable to fetch class schedule or office information.";
     }
 }
-
 
 // ============================================================
 // ROOM SELECTION & CLICK HANDLERS
@@ -109,20 +157,19 @@ function initializeRooms() {
         room.addEventListener("click", function (e) {
             e.stopPropagation();
 
-            // Remove selection state from all rooms
-            rooms.forEach(r => r.classList.remove("selected"));
+            // Remove selection state from all rooms across all floors
+            document.querySelectorAll(".room.selected").forEach(r => r.classList.remove("selected"));
 
-            // Highlight clicked polygon
+            // Highlight clicked room polygon
             this.classList.add("selected");
 
-            // Fetch and update sidebar info
+            // Update sidebar room & professor information
             updateRoomInformation(this);
         });
     });
 
-    console.log(`Initialized click handlers for ${rooms.length} rooms.`);
+    console.log(`Initialized click handlers for ${rooms.length} room polygon elements.`);
 }
-
 
 // ============================================================
 // FLOOR SWITCHING FUNCTIONALITY
@@ -138,47 +185,12 @@ function showFloor(floorNumber) {
     }
 }
 
-
-// ============================================================
-// INITIALIZATION ON DOM READY
-// ============================================================
-document.addEventListener("DOMContentLoaded", () => {
-    initializeRooms();
-    setupSearchHandlers();
-    setupCoordinateTracker();
-});
-
-// Expose floor switching to window for HTML onclick attributes
+// Expose showFloor globally so inline HTML onclick="showFloor(n)" attributes work properly
 window.showFloor = showFloor;
 
-// Converts "0800-0850" to "08:00 - 08:50" or single "0800" to "08:00"
-function formatTimeRange(timeStr) {
-    if (!timeStr) return "N/A";
-
-    const formatHHMM = (hhmm) => {
-        const clean = hhmm.trim();
-        if (clean.length === 4) {
-            return `${clean.slice(0, 2)}:${clean.slice(2)}`;
-        }
-        return clean;
-    };
-
-    // If it's a range like "0800-0850" or "0800 - 0850"
-    if (timeStr.includes("-")) {
-        return timeStr
-            .split("-")
-            .map(t => formatHHMM(t))
-            .join(" - ");
-    }
-
-    return formatHHMM(timeStr);
-}
-
-
 // ============================================================
-// SEARCH PANEL VIEW CONTROLLER
+// SEARCH PANEL CONTROLLER
 // ============================================================
-
 function setupSearchHandlers() {
     const navSearchBtn = document.getElementById("nav-search-btn");
     const backToRoomBtn = document.getElementById("back-to-room");
@@ -211,7 +223,7 @@ function setupSearchHandlers() {
         });
     }
 
-    // Toggle input fields based on filter selection
+    // Toggle input labels based on filter selection
     if (filterTypeSelect) {
         filterTypeSelect.addEventListener("change", () => {
             const val = filterTypeSelect.value;
@@ -226,6 +238,9 @@ function setupSearchHandlers() {
                     course: "Course code:",
                     crn: "CRN:",
                     instructor: "Instructor name:",
+                    department: "Department name:",
+                    college: "College name:",
+                    office: "Office room (e.g., LUTR 238):",
                     location: "Building / location:",
                     room: "Room ID:"
                 };
@@ -243,7 +258,7 @@ function setupSearchHandlers() {
         });
     }
 
-    // Execute Search API request
+    // Execute Search Request
     searchForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -268,7 +283,7 @@ function setupSearchHandlers() {
             const results = data.results;
 
             if (!results || results.length === 0) {
-                searchResults.textContent = "No courses found matching your criteria.";
+                searchResults.textContent = "No results found matching your criteria.";
                 return;
             }
 
@@ -283,17 +298,26 @@ function setupSearchHandlers() {
                 card.className = "search-result-card";
                 card.style.marginTop = "10px";
                 card.style.padding = "8px";
-                card.style.background = "#f0f4f8";
+                card.style.background = item.result_type === "professor" ? "#eef6ff" : "#f0f4f8";
+                if (item.result_type === "professor") card.style.borderLeft = "4px solid #0056b3";
                 card.style.borderRadius = "4px";
 
-                const formattedTime = formatTimeRange(item.time);
-
-                card.innerHTML = `
-                    <strong>${item.course} - ${item.title}</strong><br>
-                    <span>CRN: ${item.crn} | Room: ${item.location}</span><br>
-                    <span>Time: ${formattedTime}</span><br>
-                    <small>Instructor: ${item.instructor || "N/A"}</small>
-                `;
+                if (item.result_type === "professor") {
+                    card.innerHTML = `
+                        <strong>${item.name}</strong><br>
+                        <span>Office: ${item.office || "N/A"}</span><br>
+                        <small>Dept: ${item.department || "N/A"}</small><br>
+                        <small>College: ${item.college || "N/A"}</small>
+                    `;
+                } else {
+                    const formattedTime = formatTimeRange(item.time);
+                    card.innerHTML = `
+                        <strong>${item.course} - ${item.title}</strong><br>
+                        <span>CRN: ${item.crn} | Room: ${item.location}</span><br>
+                        <span>Time: ${formattedTime}</span><br>
+                        <small>Instructor: ${item.instructor || "N/A"}</small>
+                    `;
+                }
                 searchResults.appendChild(card);
             });
 
@@ -303,3 +327,12 @@ function setupSearchHandlers() {
         }
     });
 }
+
+// ============================================================
+// INITIALIZATION ON DOM READY
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+    initializeRooms();
+    setupSearchHandlers();
+    setupCoordinateTracker();
+});
