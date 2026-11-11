@@ -3,50 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="website/style.css">
-    <script src="website/script.js"></script>
-    <title>IMAP</title>
+    <title>Captain's Cartography</title>
+    <!-- Google Font: Architects Daughter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="website/style.css"> 
+    <script src="website/script.js"></script> 
 </head>
 <body>
-    <!-- NavBar-->
-    <nav class="navbar">
-        <h1 class="navbar-title">Interactive Map of Campus</h1>
 
+    <!-- Header / Title -->
+    <header class="header-title">
+        <a href="/index.html"><h1>Captain's Cartography</h1></a>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
         <ul class="navbar-links">
             <li class="dropdown">
-                <a href="#"><button class="menu-btn">&#9776;</button></a>
+                <a href="#" class="dropdown-toggle">Buildings <span class="arrow">&#9661;</span></a>
                 <ul class="dropdown-menu">
-                    <li><a href="index.html">Home</a></li>
-                    <li class="dropdown"><a href="#">Buildings</a>
-                        <ul class="dropdown-menu">
-                            <li><a href="website/Buildings/TFAC/">(TFAC) Torggler Fine Arts Center</a></li>
-                            <li><a href="website/Buildings/FORBES/">(FORBES) Forbes</a></li>
-                            <li><a href="website/Buildings/LUTR/">(LUTR) Luter</a></li>
-                            <li><a href="website/Buildings/MCM/">(MCM) McMurran</a></li>
-                            <li><a href="website/Buildings/FERG/">(FERG) Ferguson</a></li>
-                            <li><a href="website/Buildings/SERC/">(SERC) Science and Engineering Recearch Center</a></li>
-                            <li><a href="website/Buildings/TRIB/">(TRIB) Trible Library</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="#">Search</a></li>
-                    <li><a href="#">About</a></li>
+                    <li><a href="website/Buildings/TFAC/">Torggler Fine Arts Center (TFAC)</a></li>
+                    <li><a href="website/Buildings/FORBES/">Forbes</a></li>
+                    <li><a href="website/Buildings/LUTR/">Luter (LUTR)</a></li>
+                    <li><a href="website/Buildings/MCM/">McMurran (MCM)</a></li>
+                    <li><a href="website/Buildings/FERG/">Ferguson Center of the Arts (FERG)</a></li>
+                    <li><a href="website/Buildings/SERC/">Science and Research Center (SERC)</a></li>
+                    <li><a href="website/Buildings/TRIB/">Trible Library (TRIB)</a></li>
                 </ul>
             </li>
+            <li><a href="#">Search</a></li>
+            <li><a href="#">About</a></li>
         </ul>
+
+        <!-- Rightmost Logo -->
         <div class="navbar-logo">
             <a href="index.html">
-                <img src="website/img/Wumpus.png" alt="IMAP Logo">
+                <img src="website/media/Wumpus.png" alt="Logo"> <!-- Replace with correct logo image path -->
             </a>
         </div>
     </nav>
-    <div class="MapFlex">
-        <img class="MapList" src="website/img/MapList.png"></img>
-        <div class="MapSpacer"></div>
-        <img class="OMap" src="website/img/OMap.png"></img>
+
+    <!-- Hero Section -->
+    <div class="hero-container">
+        
+        <img src="website/media/campus-hero.gif" alt="Campus View" class="hero-image">
+        
+        <div class="hero-overlay-text">
+            Plot Your Course across Campus
+        </div>
     </div>
-
-</body>
-
 
 </body>
 </html>

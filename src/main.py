@@ -63,31 +63,23 @@ def get_room_times(
                 "location": str(getattr(course, "location", "") or "")
             })
 
-    # Professor Office Lookup for this room
+    # Search for faculty matching this room/office
     professors = []
     for prof in cfg.PROFS:
-        p_office = str(getattr(prof, "office", "") or "").upper().strip()
+        p_office = str(getattr(prof, "office", "") or "").strip().upper()
         if not p_office:
             continue
-        if building_prefix:
-            target_str = f"{building_prefix} {room_number}".upper()
-            if target_str in p_office or p_office == target_str:
-                professors.append({
-                    "name": prof.prof,
-                    "office": prof.office,
-                    "department": prof.department,
-                    "college": prof.college,
-                    "email": prof.email,
-                    "website": prof.website
-                })
-        elif search_id in p_office or room_number in p_office:
+        
+        # Match e.g. "LUTER 238" or "FORBES 3016" or room number alone
+        target_str = f"{building_prefix} {room_number}".strip() if building_prefix else search_id
+        if target_str in p_office or room_number in p_office.split():
             professors.append({
-                "name": prof.prof,
-                "office": prof.office,
-                "department": prof.department,
-                "college": prof.college,
-                "email": prof.email,
-                "website": prof.website
+                "name": str(getattr(prof, "prof", "") or ""),
+                "office": str(getattr(prof, "office", "") or ""),
+                "email": str(getattr(prof, "email", "") or ""),
+                "department": str(getattr(prof, "department", "") or ""),
+                "college": str(getattr(prof, "college", "") or ""),
+                "website": str(getattr(prof, "website", "") or "")
             })
 
     try:
@@ -166,9 +158,9 @@ def search_courses(
                 "result_type": "professor",
                 "name": p.prof,
                 "office": p.office,
+                "email": p.email,
                 "department": p.department,
                 "college": p.college,
-                "email": p.email,
                 "website": p.website
             })
     elif type == "college":
@@ -178,9 +170,9 @@ def search_courses(
                 "result_type": "professor",
                 "name": p.prof,
                 "office": p.office,
+                "email": p.email,
                 "department": p.department,
                 "college": p.college,
-                "email": p.email,
                 "website": p.website
             })
     elif type == "office":
@@ -190,9 +182,9 @@ def search_courses(
                 "result_type": "professor",
                 "name": p.prof,
                 "office": p.office,
+                "email": p.email,
                 "department": p.department,
                 "college": p.college,
-                "email": p.email,
                 "website": p.website
             })
     elif type == "time":
