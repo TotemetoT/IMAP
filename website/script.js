@@ -330,6 +330,35 @@ function setupSearchHandlers() {
     });
 }
 
+
+// ======================================
+//            NavBar Injection
+// ======================================
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/website/navbar.html') // Update path if needed
+        .then(response => response.text())
+        .then(data => {
+            const placeholder = document.getElementById('navbar-placeholder');
+            if (placeholder) {
+                placeholder.innerHTML = data;
+
+                // Attach event listener to the search link inside the newly injected navbar
+                const navSearchBtn = document.getElementById("nav-search-btn");
+                const roomInfoView = document.getElementById("room-info-view");
+                const searchInfoView = document.getElementById("search-info-view");
+
+                if (navSearchBtn && roomInfoView && searchInfoView) {
+                    navSearchBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        roomInfoView.hidden = true;
+                        searchInfoView.hidden = false;
+                    });
+                }
+            }
+        })
+        .catch(err => console.error("Error loading navbar:", err));
+});
+
 // Initialize script once DOM content is ready
 document.addEventListener("DOMContentLoaded", () => {
     initializeRooms();

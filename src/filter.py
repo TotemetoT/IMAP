@@ -79,15 +79,33 @@ def ID_room(R, rooms=cfg.COURSES):
         if R in room.location:
             return room
 
-def Instructor(N, full=False):
-    courses = cfg.FULL_COURSES if full else cfg.COURSES
-    N = N.lower().split(" ")
+def Instructor(N, full=False): #TODO Fix this for more specific searches (maybe)
+    if full: 
+        courses = cfg.FULL_COURSES
+    else: 
+        courses = cfg.COURSES
+    N = N.split(" ")
     Ilist = []
     for row in courses:
-        I = (row.instructor or "").lower()
-        if not I:
-            continue
-        if all(part in I for part in N):
+        I = row.instructor
+        if I == [] or I == None or I == '': continue
+        if '; ' in I:
+            I = I.split('; ')
+            c = 0
+            for i in I:
+                # print(I, i)
+                I[c] = i.split(', ')
+                c += 1
+            for _ in range(len(I)):
+                I.append(I[0][0])
+                I.append(I[0][1])
+                I.remove(I[0])
+        else: 
+            I = I.split(', ')
+        if len(N) == 1:
+            if N[0].capitalize() in I: 
+                Ilist.append(row)
+        elif N[0].capitalize() in I and N[1].capitalize() in I:
             Ilist.append(row)
     return Ilist
 
