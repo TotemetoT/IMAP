@@ -293,35 +293,73 @@ function setupSearchHandlers() {
             countHeading.textContent = `Found ${results.length} result(s):`;
             searchResults.appendChild(countHeading);
 
-            results.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "search-result-card";
-                card.style.marginTop = "10px";
-                card.style.padding = "10px";
-                card.style.background = item.result_type === "professor" ? "#eef6ff" : "#f0f4f8";
-                if (item.result_type === "professor") card.style.borderLeft = "4px solid #0056b3";
-                card.style.borderRadius = "4px";
+// Inside searchForm.addEventListener("submit", async (e) => { ... })
+// Replace or update your result card creation loop:
 
-                if (item.result_type === "professor") {
-                    card.innerHTML = `
-                        <div style="font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">${item.name}</div>
-                        <div><strong>Office:</strong> ${item.office || "N/A"}</div>
-                        <div><strong>Email:</strong> ${item.email ? `<a href="mailto:${item.email}">${item.email}</a>` : "N/A"}</div>
-                        <div><strong>Department:</strong> ${item.department || "N/A"}</div>
-                        <div><strong>College:</strong> ${item.college || "N/A"}</div>
-                        <div><strong>CNU Website:</strong> ${item.website ? `<a href="${item.website}" target="_blank" rel="noopener noreferrer">Profile Link</a>` : "N/A"}</div>
-                    `;
-                } else {
-                    const formattedTime = formatTimeRange(item.time);
-                    card.innerHTML = `
-                        <strong>${item.course} - ${item.title}</strong><br>
-                        <span>CRN: ${item.crn} | Room: ${item.location}</span><br>
-                        <span>Time: ${formattedTime}</span><br>
-                        <small>Instructor: ${item.instructor || "N/A"}</small>
-                    `;
+        results.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "search-result-card";
+            card.style.marginTop = "10px";
+            card.style.padding = "10px";
+            card.style.cursor = "pointer"; // Show clickable cursor
+            card.style.background = item.result_type === "professor" ? "#eef6ff" : "#f0f4f8";
+            if (item.result_type === "professor") card.style.borderLeft = "4px solid #0056b3";
+            card.style.borderRadius = "4px";
+
+            if (item.result_type === "professor") {
+                card.innerHTML = `
+                    <div style="font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">${item.name}</div>
+                    <div><strong>Office:</strong> ${item.office || "N/A"}</div>
+                    <div><strong>Email:</strong> ${item.email ? `<a href="mailto:${item.email}">${item.email}</a>` : "N/A"}</div>
+                    <div><strong>Department:</strong> ${item.department || "N/A"}</div>
+                    <div><strong>College:</strong> ${item.college || "N/A"}</div>
+                `;
+            } else {
+                const formattedTime = formatTimeRange(item.time);
+                card.innerHTML = `
+                    <strong>${item.course} - ${item.title}</strong><br>
+                    <span>CRN: ${item.crn} | Room: ${item.location}</span><br>
+                    <span>Time: ${formattedTime}</span><br>
+                    <small>Instructor: ${item.instructor || "N/A"}</small>
+                `;
+            }
+
+            // --- AUTO-NAVIGATE & HIGHLIGHT ROOM ON CLICK ---
+            card.addEventListener("click", () => {
+                // Extract room string (e.g., "LUTR 238" or "238")
+                const rawRoomStr = item.result_type === "professor" ? item.office : item.location;
+                if (!rawRoomStr) return;
+
+                // Match room ID digits (e.g., extracts "238" from "LUTR 238")
+                const roomMatch = rawRoomStr.match(/\d+[A-Z]?/i);
+                if (!roomMatch) return;
+
+                const roomId = roomMatch[0]; // e.g., "238" or "114A"
+                
+                // Floor number is determined by the first digit of the room number (e.g., 238 -> 2)
+                const floorNum = roomId.charAt(0);
+
+                // 1. Switch to correct floor
+                if (typeof showFloor === "function") {
+                    showFloor(floorNum);
                 }
-                searchResults.appendChild(card);
+
+                // 2. Locate room polygon on the newly shown floor
+                const targetRoom = document.querySelector(`.room[data-room="${roomId}"], .room[data-name*="${roomId}"]`);
+
+                if (targetRoom) {
+                    // Trigger room selection logic
+                    targetRoom.click();
+
+                    // Scroll room into view smoothly if needed
+                    targetRoom.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else {
+                    console.warn(`Room polygon for ${roomId} not found on floor ${floorNum}.`);
+                }
             });
+
+            searchResults.appendChild(card);
+        });
 
         } catch (err) {
             console.error("Search error:", err);
@@ -357,6 +395,35 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         })
         .catch(err => console.error("Error loading navbar:", err));
+});
+
+// ======================================
+//        Partial Views Injection
+// ======================================
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        // Load Navbar
+        const navRes = await fetch('/website/navbar.html');
+        if (navRes.ok) {
+            const navData = await navRes.text();
+            const navContainer = document.getElementById('navbar-placeholder');
+            if (navContainer) navContainer.innerHTML = navData;
+        }
+
+        // Load Searchbar
+        const searchRes = await fetch('/website/searchbar.html');
+        if (searchRes.ok) {
+            const searchData = await searchRes.text();
+            const searchContainer = document.getElementById('searchbar-placeholder');
+            if (searchContainer) searchContainer.innerHTML = searchData;
+        }
+
+        // Initialize search event listeners AFTER searchbar HTML is injected into DOM
+        setupSearchHandlers();
+
+    } catch (err) {
+        console.error("Error loading component partials:", err);
+    }
 });
 
 // Initialize script once DOM content is ready

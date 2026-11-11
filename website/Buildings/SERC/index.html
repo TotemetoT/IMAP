@@ -22,71 +22,14 @@
             INFORMATION PANEL
         -->
         <div class="room-info" id="information-panel">
-
             <!-- Original room-information view -->
             <section id="room-info-view">
                 <h2 id="room-name">Select a room</h2>
                 <p id="room-description">Click a room on the floorplan.</p>
             </section>
 
-            <!-- Search view: replaces the room information -->
-            <section id="search-info-view" hidden>
-                <h2>Search &amp; Filter</h2>
-                <p>Choose an option to find courses, instructors, rooms, or class times.</p>
-
-                <form id="course-search-form">
-                    <label for="filter-type">Search by:</label>
-                    <select id="filter-type" name="filterType">
-                        <option value="course">Course code</option>
-                        <option value="crn">CRN</option>
-                        <option value="instructor">Instructor</option>
-                        <option value="location">Building / location</option>
-                        <option value="room">Room ID</option>
-                        <option value="time">Class time</option>
-                    </select>
-
-                    <div id="query-field">
-                        <label for="filter-query" id="query-label">Course code:</label>
-                        <input
-                            type="search"
-                            id="filter-query"
-                            name="query"
-                            placeholder="e.g., CPSC 150"
-                        >
-                    </div>
-
-                    <div id="time-options" hidden>
-                        <label for="filter-day">Day of week:</label>
-                        <select id="filter-day" name="day">
-                            <option value="M">Monday</option>
-                            <option value="T">Tuesday</option>
-                            <option value="W">Wednesday</option>
-                            <option value="R">Thursday</option>
-                            <option value="F">Friday</option>
-                            <option value="S">Saturday</option>
-                            <option value="U">Sunday</option>
-                        </select>
-
-                        <label for="filter-time">Time (24-hour HHMM):</label>
-                        <input
-                            type="text"
-                            id="filter-time"
-                            name="time"
-                            placeholder="e.g., 1330"
-                            inputmode="numeric"
-                        >
-                    </div>
-
-                    <div class="search-panel-buttons">
-                        <button type="submit">Search</button>
-                        <button type="button" id="clear-search">Clear</button>
-                        <button type="button" id="back-to-room">Back to room info</button>
-                    </div>
-                </form>
-
-                <div id="search-results" aria-live="polite"></div>
-            </section>
-
+            <!-- Search panel injected here -->
+            <div id="searchbar-placeholder"></div>
         </div>
 
 
