@@ -760,6 +760,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 // ======================================
+//         VIDEO PLAYBACK SPEED
+// ======================================
+
+document.addEventListener("DOMContentLoaded", () => {
+    const heroVideo = document.getElementById("hero-video");
+    
+    if (heroVideo) {
+        heroVideo.playbackRate = 1; 
+    }
+});
+
+// ======================================
 //          DOM Initialization
 // ======================================
 document.addEventListener("DOMContentLoaded", () => {
