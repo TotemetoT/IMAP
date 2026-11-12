@@ -1,5 +1,10 @@
 const RENDER_API_URL = "https://imap-bi2w.onrender.com";
 
+// Dynamically determine the base path for localhost vs. GitHub Pages
+const BASE_PATH = window.location.hostname.includes("github.io")
+    ? `/${window.location.pathname.split("/")[1]}`
+    : "";
+
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
@@ -61,13 +66,13 @@ function navigateToBuildingRoom(buildingCode, roomId) {
     const targetBuilding = (buildingCode || "").toUpperCase();
 
     const buildingPages = {
-        "TFAC": "/website/Buildings/TFAC/index.html",
-        "LUTR": "/website/Buildings/LUTR/index.html",
-        "SERC": "/website/Buildings/SERC/index.html",
-        "FORBES": "/website/Buildings/FORBES/index.html",
-        "MCM": "/website/Buildings/MCM/index.html",
-        "TRIB": "/website/Buildings/TRIB/index.html",
-        "FERG": "/website/Buildings/FERG/index.html"
+        "TFAC": `${BASE_PATH}/website/Buildings/TFAC/index.html`,
+        "LUTR": `${BASE_PATH}/website/Buildings/LUTR/index.html`,
+        "SERC": `${BASE_PATH}/website/Buildings/SERC/index.html`,
+        "FORBES": `${BASE_PATH}/website/Buildings/FORBES/index.html`,
+        "MCM": `${BASE_PATH}/website/Buildings/MCM/index.html`,
+        "TRIB": `${BASE_PATH}/website/Buildings/TRIB/index.html`,
+        "FERG": `${BASE_PATH}/website/Buildings/FERG/index.html`
     };
 
     // CASE A: User is on a DIFFERENT building page -> Redirect with URL parameters
@@ -719,15 +724,27 @@ function setupSearchHandlers() {
 document.addEventListener("DOMContentLoaded", async function () {
     try {
         // 1. Load Navbar Partial
-        const navRes = await fetch('/website/navbar.html');
+        const navRes = await fetch(`${BASE_PATH}/website/navbar.html`);
         if (navRes.ok) {
             const navData = await navRes.text();
             const navContainer = document.getElementById('navbar-placeholder');
-            if (navContainer) navContainer.innerHTML = navData;
+            if (navContainer) {
+                navContainer.innerHTML = navData;
+
+                // Fix root-relative href and src paths inside the injected navbar for GitHub Pages
+                if (BASE_PATH) {
+                    navContainer.querySelectorAll('a[href^="/"]').forEach(link => {
+                        link.setAttribute('href', `${BASE_PATH}${link.getAttribute('href')}`);
+                    });
+                    navContainer.querySelectorAll('img[src^="/"]').forEach(img => {
+                        img.setAttribute('src', `${BASE_PATH}${img.getAttribute('src')}`);
+                    });
+                }
+            }
         }
 
         // 2. Load Searchbar Partial
-        const searchRes = await fetch('/website/searchbar.html');
+        const searchRes = await fetch(`${BASE_PATH}/website/searchbar.html`);
         if (searchRes.ok) {
             const searchData = await searchRes.text();
             const searchContainer = document.getElementById('searchbar-placeholder');
