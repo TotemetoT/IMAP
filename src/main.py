@@ -5,6 +5,7 @@ import configs as cfg
 import dataloader as dl
 import filter as f
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     cfg.COURSES = dl.C_Load_CSV()
@@ -12,6 +13,7 @@ async def lifespan(app: FastAPI):
     cfg.PROFS = dl.P_Load_CSV()
     print(f"Loaded {len(cfg.COURSES)} courses and {len(cfg.PROFS)} professors into memory.")
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -23,9 +25,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def home():
     return {"message": "Campus Map API is live!"}
+
 
 @app.get("/api/room-times")
 def get_room_times(
@@ -36,7 +40,7 @@ def get_room_times(
     search_id = fullRoomId.strip().upper()
     parsed_b, parsed_r = f.parse_building_room(search_id)
 
-    building_prefix = f.normalize_building(building) if building else parsed_b
+    building_prefix = building.strip().upper() if building else parsed_b
     room_number = parsed_r if parsed_r else (search_id.split()[-1] if " " in search_id else search_id)
 
     matching_courses = []
@@ -67,7 +71,7 @@ def get_room_times(
                 "location": str(getattr(course, "location", "") or "")
             })
 
-    # Match faculty by normalized building + exact room number
+    # Match faculty strictly by building + room number pair
     professors = []
     for prof in cfg.PROFS:
         p_office_raw = str(getattr(prof, "office", "") or "").strip()
@@ -77,6 +81,12 @@ def get_room_times(
         p_b, p_r = f.parse_building_room(p_office_raw)
         if building_prefix and p_b == building_prefix and p_r == room_number:
             prof_name = str(getattr(prof, "prof", "") or "")
+            try:
+                matched_prof_courses = f.Instructor(prof_name, full=True)
+            except Exception as err:
+                print(f"Error looking up courses for {prof_name}: {err}")
+                matched_prof_courses = []
+
             prof_courses = [
                 {
                     "course": str(getattr(c, "course", "") or ""),
@@ -86,7 +96,7 @@ def get_room_times(
                     "time": str(getattr(c, "time", "") or ""),
                     "location": str(getattr(c, "location", "") or "")
                 }
-                for c in f.Instructor(prof_name)
+                for c in matched_prof_courses
             ]
             professors.append({
                 "name": prof_name,
@@ -110,6 +120,7 @@ def get_room_times(
         "professors": professors
     }
 
+
 @app.get("/api/search")
 def search_courses(
     type: str = Query("course"),
@@ -118,10 +129,9 @@ def search_courses(
     time: str = Query(None)
 ):
     results = []
-    
+
     if type == "course":
-        courses = f.Course(query)
-        for course in courses:
+        for course in f.Course(query):
             results.append({
                 "result_type": "course",
                 "course": str(getattr(course, "course", "") or ""),
@@ -146,8 +156,7 @@ def search_courses(
                 "location": str(getattr(match, "location", "") or "")
             })
     elif type == "instructor":
-        courses = f.Instructor(query)
-        for course in courses:
+        for course in f.Instructor(query, full=True):
             results.append({
                 "result_type": "course",
                 "course": str(getattr(course, "course", "") or ""),
@@ -159,8 +168,7 @@ def search_courses(
                 "location": str(getattr(course, "location", "") or "")
             })
     elif type in ("location", "room"):
-        courses = f.Location(query)
-        for course in courses:
+        for course in f.Location(query):
             results.append({
                 "result_type": "course",
                 "course": str(getattr(course, "course", "") or ""),
@@ -172,8 +180,7 @@ def search_courses(
                 "location": str(getattr(course, "location", "") or "")
             })
     elif type == "department":
-        profs = f.ProfessorDepartment(query)
-        for p in profs:
+        for p in f.ProfessorDepartment(query):
             results.append({
                 "result_type": "professor",
                 "name": p.prof,
@@ -184,8 +191,7 @@ def search_courses(
                 "website": p.website
             })
     elif type == "college":
-        profs = f.ProfessorCollege(query)
-        for p in profs:
+        for p in f.ProfessorCollege(query):
             results.append({
                 "result_type": "professor",
                 "name": p.prof,

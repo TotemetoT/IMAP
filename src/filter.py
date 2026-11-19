@@ -1,21 +1,8 @@
 import csv
 import re
 import configs as cfg
+import dataloader as dl
 import utils as u
-
-BUILDING_ALIASES = {
-    "FORBES": "FORBES",
-    "LUTR": "LUTR",
-    "LUTER": "LUTR",
-    "TRIB": "TRIB",
-    "TRIBLE": "TRIB",
-    "TFAC": "TFAC",
-    "MCM": "MCM",
-    "MCMURRAN": "MCM",
-    "SERC": "SERC",
-    "FERG": "FERG",
-    "FERGUSON": "FERG",
-}
 
 FIRST_NAME_VARIANTS = {
     "rob": {"rob", "robert", "bob", "bobby"},
@@ -54,36 +41,23 @@ FIRST_NAME_VARIANTS = {
     "kathryn": {"kate", "katherine", "kathryn", "katie"},
 }
 
-SUFFIXES = {"ii", "iii", "iv", "jr", "sr"}
-
-def normalize_building(building_str):
-    if not building_str:
-        return ""
-    clean = re.sub(r"[^A-Z]", "", building_str.strip().upper())
-    return BUILDING_ALIASES.get(clean, clean)
 
 def parse_building_room(location_str):
     """
-    Parses strings like 'Luter 238', 'FORBES 3016', 'MCM 201J', or 'FERG T177'
-    into ('LUTR', '238'), ('FORBES', '3016'), ('MCM', '201J'), ('FERG', 'T177').
+    Parses canonical '<BUILDING> <ROOM>' strings:
+      'LUTR 325'     -> ('LUTR', '325')
+      'FORBES 3016'  -> ('FORBES', '3016')
+      'FERG R113'    -> ('FERG', 'R113')
+      'TRIB 240-1'   -> ('TRIB', '240-1')
     """
     if not location_str:
         return "", ""
     clean = location_str.strip().upper()
-    match = re.match(r"^([A-Z]+)\s+([A-Z]?\d{3,5}[A-Z]?)$", clean)
+    match = re.match(r"^([A-Z]+)\s+([A-Z]?\d{3,5}(?:-[A-Z0-9]+|[A-Z])?)$", clean)
     if match:
-        return normalize_building(match.group(1)), match.group(2)
+        return match.group(1), match.group(2)
     return "", ""
 
-def _strip_suffixes(tokens):
-    return [t for t in tokens if re.sub(r"\.", "", t).lower() not in SUFFIXES]
-
-def _first_names_match(first_a, first_b):
-    a = first_a.lower().strip()
-    b = first_b.lower().strip()
-    if a == b:
-        return True
-    return b in FIRST_NAME_VARIANTS.get(a, {a})
 
 # ==============================
 #    PROFESSOR OFFICE FILTERS
@@ -93,13 +67,15 @@ def ProfessorDepartment(query):
     query = query.lower().strip()
     return [p for p in cfg.PROFS if query in (p.department or "").lower()]
 
+
 def ProfessorCollege(query):
     query = query.lower().strip()
     return [p for p in cfg.PROFS if query in (p.college or "").lower()]
 
+
 def ProfessorOffice(query):
     clean_query = (query or "").strip()
-    if re.fullmatch(r"[A-Za-z]?\d{3,5}[A-Za-z]?", clean_query):
+    if re.fullmatch(r"[A-Za-z]?\d{3,5}(?:-[A-Za-z0-9]+|[A-Za-z])?", clean_query):
         raise ValueError("missing building name, use the following format (LUTR 121)")
 
     target_building, target_room = parse_building_room(clean_query)
@@ -113,40 +89,39 @@ def ProfessorOffice(query):
             results.append(p)
     return results
 
-# ============================== 
+
+# ==============================
 #        COURSE FILTERS
 # ==============================
 
 def CRN(val):
     for row in cfg.COURSES:
-        if row.CRN == str(val):
+        if row.CRN == str(val).strip():
             return row
     return None
+
 
 def Location(val, rooms=cfg.COURSES):
     clean_val = (val or "").strip()
     target_b, target_r = parse_building_room(clean_val)
-    norm_prefix = normalize_building(clean_val)
+    upper_val = clean_val.upper()
 
     L_dict = []
     for row in rooms:
         raw_loc = str(getattr(row, "location", "") or "").strip()
         if not raw_loc:
             continue
-        locations = [x.strip() for x in raw_loc.split(";") if x.strip()]
-        for loc in locations:
+        for loc in [x.strip() for x in raw_loc.split(";") if x.strip()]:
             loc_b, loc_r = parse_building_room(loc)
             if target_b and target_r:
                 if loc_b == target_b and loc_r == target_r:
                     L_dict.append(row)
                     break
-            elif norm_prefix and loc_b == norm_prefix:
-                L_dict.append(row)
-                break
-            elif loc.lower().startswith(clean_val.lower()):
+            elif loc_b == upper_val or loc.lower().startswith(clean_val.lower()):
                 L_dict.append(row)
                 break
     return L_dict
+
 
 def Time(t, d):
     t = int(t)
@@ -175,10 +150,11 @@ def Time(t, d):
 
     return used, unused
 
+
 def RoomTimes(room, d, building=None):
     courses = cfg.COURSES
     times = []
-    norm_building = normalize_building(building) if building else ""
+    clean_building = (building or "").strip().upper()
     clean_room = (room or "").strip().upper()
 
     for course in courses:
@@ -193,8 +169,8 @@ def RoomTimes(room, d, building=None):
         matched = False
         for loc in locations:
             loc_b, loc_r = parse_building_room(loc)
-            if norm_building:
-                if loc_b == norm_building and loc_r == clean_room:
+            if clean_building:
+                if loc_b == clean_building and loc_r == clean_room:
                     matched = True
                     break
             elif loc_r == clean_room or clean_room in loc.upper():
@@ -211,59 +187,45 @@ def RoomTimes(room, d, building=None):
 
     return times
 
+
 def ID_room(R, rooms=cfg.COURSES):
     R = str(R)
     for room in rooms:
         if R in room.location:
             return room
 
+
+def _token_matches(q_tok, inst_tokens):
+    if q_tok in inst_tokens:
+        return True
+    variants = FIRST_NAME_VARIANTS.get(q_tok)
+    if variants and any(v in inst_tokens for v in variants):
+        return True
+    return False
+
+
 def Instructor(N, full=False):
     courses = cfg.FULL_COURSES if full else cfg.COURSES
-    raw_query = (N or "").strip()
-    if not raw_query:
+    query_tokens = dl.parse_name_parts(N)
+    if not query_tokens:
         return []
-
-    if "," in raw_query:
-        last_part, first_part = [p.strip() for p in raw_query.split(",", 1)]
-        q_first = first_part.split()[0].lower() if first_part else ""
-        q_last = " ".join(_strip_suffixes(last_part.split())).lower()
-    else:
-        tokens = _strip_suffixes(raw_query.split())
-        if len(tokens) == 1:
-            q_first = ""
-            q_last = tokens[0].lower()
-        else:
-            q_first = tokens[0].lower()
-            q_last = " ".join(tokens[1:]).lower()
 
     Ilist = []
     for row in courses:
-        raw_inst = getattr(row, "instructor", None)
-        if not raw_inst:
-            continue
+        inst_lists = getattr(row, "instructors_list", None)
+        if not inst_lists:
+            raw_inst = str(getattr(row, "instructor", "") or "")
+            inst_lists = [dl.parse_name_parts(i) for i in raw_inst.split(";") if i.strip()]
 
-        instructors = [i.strip() for i in str(raw_inst).split(";") if i.strip()]
-        for inst in instructors:
-            if "," in inst:
-                inst_last_raw, inst_first_raw = [p.strip() for p in inst.split(",", 1)]
-                inst_last = " ".join(_strip_suffixes(inst_last_raw.split())).lower()
-                inst_first = inst_first_raw.split()[0].lower() if inst_first_raw else ""
-            else:
-                inst_tokens = _strip_suffixes(inst.split())
-                inst_first = inst_tokens[0].lower() if inst_tokens else ""
-                inst_last = " ".join(inst_tokens[1:]).lower() if len(inst_tokens) > 1 else ""
-
-            if not q_first:
-                if q_last == inst_last or q_last in inst_last.split() or _first_names_match(q_last, inst_first):
-                    Ilist.append(row)
-                    break
-            else:
-                last_matches = (q_last == inst_last) or (q_last.split()[-1] == inst_last.split()[-1])
-                if last_matches and _first_names_match(q_first, inst_first):
-                    Ilist.append(row)
-                    break
+        for inst_tokens in inst_lists:
+            if not inst_tokens:
+                continue
+            if all(_token_matches(q_tok, inst_tokens) for q_tok in query_tokens):
+                Ilist.append(row)
+                break
 
     return Ilist
+
 
 def Course(C):
     courses = cfg.COURSES
