@@ -5,37 +5,29 @@ const BASE_PATH = window.location.hostname.includes("github.io")
     ? `/${window.location.pathname.split("/")[1]}`
     : "";
 
-const BUILDING_ALIASES = {
-    "FORBES": "FORBES",
-    "LUTR": "LUTR",
-    "LUTER": "LUTR",
-    "TRIB": "TRIB",
-    "TRIBLE": "TRIB",
-    "TFAC": "TFAC",
-    "MCM": "MCM",
-    "MCMURRAN": "MCM",
-    "SERC": "SERC",
-    "FERG": "FERG",
-    "FERGUSON": "FERG"
-};
-
-function normalizeBuildingCode(rawCode) {
-    if (!rawCode) return "";
-    const clean = rawCode.trim().toUpperCase();
-    return BUILDING_ALIASES[clean] || clean;
+function parseLocationParts(rawLocation) {
+    if (!rawLocation) return { building: "", room: "" };
+    const clean = rawLocation.trim().toUpperCase();
+    const match = clean.match(/^([A-Z]+)\s+([A-Z]?\d{3,5}(?:-[A-Z0-9]+|[A-Z])?)$/);
+    if (match) {
+        return { building: match[1], room: match[2] };
+    }
+    const rMatch = clean.match(/([A-Z]?\d{3,5}(?:-[A-Z0-9]+|[A-Z])?)/);
+    return {
+        building: (document.body.dataset.building || "").trim().toUpperCase(),
+        room: rMatch ? rMatch[1] : ""
+    };
 }
 
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
 
-// Helper: Get Current Day Code (M, T, W, R, F, S, U)
 function getTodayCode() {
     const day = new Date().getDay();
     return ["U", "M", "T", "W", "R", "F", "S"][day];
 }
 
-// Converts HHMM ranges like "0800-0850" to "08:00 - 08:50"
 function formatTimeRange(timeStr) {
     if (!timeStr) return "N/A";
 
@@ -57,7 +49,6 @@ function formatTimeRange(timeStr) {
     return formatHHMM(timeStr);
 }
 
-// Coordinate tracker relative to SVG viewBox
 function setupCoordinateTracker() {
     const mouseX = document.getElementById("mouse-x");
     const mouseY = document.getElementById("mouse-y");
@@ -78,12 +69,11 @@ function setupCoordinateTracker() {
 // BUILDING & ROOM NAVIGATION HELPERS
 // ============================================================
 
-// Helper: Navigate to a target building & room polygon
 function navigateToBuildingRoom(buildingCode, roomId, skipRoomInfo = false) {
     if (!roomId) return;
 
-    const currentBuilding = normalizeBuildingCode(document.body.dataset.building || "");
-    const targetBuilding = normalizeBuildingCode(buildingCode || "");
+    const currentBuilding = (document.body.dataset.building || "").trim().toUpperCase();
+    const targetBuilding = (buildingCode || "").trim().toUpperCase();
 
     const buildingPages = {
         "TFAC": `${BASE_PATH}/website/Buildings/TFAC/index.html`,
@@ -95,50 +85,38 @@ function navigateToBuildingRoom(buildingCode, roomId, skipRoomInfo = false) {
         "FERG": `${BASE_PATH}/website/Buildings/FERG/index.html`
     };
 
-    // CASE A: User is on a DIFFERENT building page -> Redirect with URL parameters
     if (targetBuilding && targetBuilding !== currentBuilding && buildingPages[targetBuilding]) {
         window.location.href = `${buildingPages[targetBuilding]}?room=${encodeURIComponent(roomId)}`;
         return;
     }
 
-    // CASE B: User is ALREADY on the target building page -> Select room immediately
     selectAndHighlightRoom(roomId, skipRoomInfo);
 }
 
-// Helper: Switch floor, find room polygon, and trigger click event
 function selectAndHighlightRoom(roomId, skipRoomInfo = false) {
     if (!roomId) return;
 
     const cleanRoomId = roomId.trim().toUpperCase();
-
-    // Floor number corresponds to first digit (handles both "238" -> "2" and "T177" -> "1")
     const digitMatch = cleanRoomId.match(/\d/);
     const floorNum = digitMatch ? digitMatch[0] : cleanRoomId.charAt(0);
 
-    // 1. Switch to the correct floor first
     if (typeof showFloor === "function") {
         showFloor(floorNum);
     }
 
-    // 2. Allow DOM/CSS transition to register before selecting polygon
     setTimeout(() => {
         const targetRoom = document.querySelector(
             `.room[data-room="${cleanRoomId}"], .room[data-name*="${cleanRoomId}"]`
         );
 
         if (targetRoom) {
-            // Clear previous room selection across all floors
             document.querySelectorAll(".room.selected").forEach(r => r.classList.remove("selected"));
-
-            // Add selection class
             targetRoom.classList.add("selected");
 
-            // Update sidebar content unless we are keeping professor details displayed
             if (!skipRoomInfo) {
                 updateRoomInformation(targetRoom);
             }
 
-            // Scroll polygon into view
             targetRoom.scrollIntoView({ behavior: "smooth", block: "center" });
         } else {
             console.warn(`Room polygon for ${cleanRoomId} not found on floor ${floorNum}.`);
@@ -146,7 +124,6 @@ function selectAndHighlightRoom(roomId, skipRoomInfo = false) {
     }, 150);
 }
 
-// Helper: Check if URL contains ?room=XXX parameter on page load
 function checkUrlForTargetRoom() {
     const urlParams = new URLSearchParams(window.location.search);
     const targetRoomId = urlParams.get("room");
@@ -159,10 +136,55 @@ function checkUrlForTargetRoom() {
 }
 
 // ============================================================
+// HELPER: RENDER A PROFESSOR COURSE CARD
+// ============================================================
+function buildProfessorCourseCard(item) {
+    const card = document.createElement("div");
+    card.className = "prof-course-card";
+    card.style.marginTop = "8px";
+    card.style.padding = "8px";
+    card.style.background = "#f0f4f8";
+    card.style.borderRadius = "4px";
+
+    const formattedTime = formatTimeRange(item.time);
+    const rawLocation = item.location || "N/A";
+    const fullCourseLabel = `${item.course}${item.title ? ` - ${item.title}` : ''}`;
+
+    card.innerHTML = `
+        <span><a href="#" class="course-full-link" style="color: #004d99; font-weight: bold; text-decoration: underline; cursor: pointer;">${fullCourseLabel}</a></span><br>
+        <small>CRN: ${item.crn || "N/A"}</small><br>
+        <small>Days: ${item.days || "N/A"} | Time: ${formattedTime}</small><br>
+        <small>Location: <a href="#" class="section-room-link" style="color: #0056b3; font-weight: bold; text-decoration: underline; cursor: pointer;">${rawLocation}</a></small>
+    `;
+
+    const courseLink = card.querySelector(".course-full-link");
+    if (courseLink) {
+        courseLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            displayCourseSections(item.course);
+        });
+    }
+
+    const roomLink = card.querySelector(".section-room-link");
+    if (roomLink && rawLocation !== "N/A") {
+        roomLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const parsed = parseLocationParts(rawLocation);
+            if (parsed.room) {
+                navigateToBuildingRoom(parsed.building, parsed.room);
+            }
+        });
+    }
+
+    return card;
+}
+
+// ============================================================
 // COURSE SECTIONS DISPLAY IN INFO BOX
 // ============================================================
 
-// Helper: Display all offered sections of a selected course in the Info Box
 async function displayCourseSections(courseCode) {
     const roomDescription = document.getElementById("room-description");
     const roomName = document.getElementById("room-name");
@@ -210,24 +232,19 @@ async function displayCourseSections(courseCode) {
 
             entry.innerHTML = `
                 <strong>CRN: ${item.crn || "N/A"}</strong> - <span>${fullCourseLabel}</span><br>
-                <small>Time: ${formattedTime}</small><br>
+                <small>Days: ${item.days || "N/A"} | Time: ${formattedTime}</small><br>
                 <small>Location: <a href="#" class="section-room-link" style="color: #0056b3; font-weight: bold; text-decoration: underline; cursor: pointer;">${rawLocation}</a></small><br>
                 <small>Instructor: ${item.instructor || "N/A"}</small>
             `;
 
-            // CLICKABLE ROOM LOCATION: Navigates map to classroom location
             const roomLink = entry.querySelector(".section-room-link");
             if (roomLink && rawLocation !== "N/A") {
                 roomLink.addEventListener("click", (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-
-                    const bMatch = rawLocation.match(/^[A-Z]+/i);
-                    const rMatch = rawLocation.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || rawLocation.match(/([A-Z]?\d+[A-Z]?)/i);
-
-                    if (rMatch) {
-                        const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
-                        navigateToBuildingRoom(bCode, rMatch[1]);
+                    const parsed = parseLocationParts(rawLocation);
+                    if (parsed.room) {
+                        navigateToBuildingRoom(parsed.building, parsed.room);
                     }
                 });
             }
@@ -253,21 +270,17 @@ async function displayProfessorDetails(prof) {
     roomName.textContent = prof.name;
     roomDescription.textContent = "Loading professor details and courses...";
 
-    // Highlight the professor's office on the floorplan map without overwriting professor details
     const officeLocation = prof.office || "";
     if (officeLocation) {
-        const bMatch = officeLocation.match(/^[A-Z]+/i);
-        const rMatch = officeLocation.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || officeLocation.match(/([A-Z]?\d+[A-Z]?)/i);
-        if (rMatch) {
-            const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
-            navigateToBuildingRoom(bCode, rMatch[1], true);
+        const parsed = parseLocationParts(officeLocation);
+        if (parsed.room) {
+            navigateToBuildingRoom(parsed.building, parsed.room, true);
         }
     }
 
     try {
         roomDescription.replaceChildren();
 
-        // 1. Render Professor Information Header Card
         const profHeader = document.createElement("div");
         profHeader.className = "prof-info-header";
         profHeader.style.padding = "10px";
@@ -299,18 +312,15 @@ async function displayProfessorDetails(prof) {
             profOfficeLink.addEventListener("click", (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const bMatch = officeLocation.match(/^[A-Z]+/i);
-                const rMatch = officeLocation.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || officeLocation.match(/([A-Z]?\d+[A-Z]?)/i);
-                if (rMatch) {
-                    const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
-                    navigateToBuildingRoom(bCode, rMatch[1]);
+                const parsed = parseLocationParts(officeLocation);
+                if (parsed.room) {
+                    navigateToBuildingRoom(parsed.building, parsed.room);
                 }
             });
         }
 
         roomDescription.appendChild(profHeader);
 
-        // 2. Fetch courses taught by this instructor across all rooms
         const url = new URL(`${RENDER_API_URL}/api/search`);
         url.searchParams.append("type", "instructor");
         url.searchParams.append("query", prof.name);
@@ -338,48 +348,7 @@ async function displayProfessorDetails(prof) {
         }
 
         courses.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "prof-course-card";
-            card.style.marginTop = "8px";
-            card.style.padding = "8px";
-            card.style.background = "#f0f4f8";
-            card.style.borderRadius = "4px";
-
-            const formattedTime = formatTimeRange(item.time);
-            const rawLocation = item.location || "N/A";
-            const fullCourseLabel = `${item.course}${item.title ? ` - ${item.title}` : ''}`;
-
-            card.innerHTML = `
-                <span><a href="#" class="course-full-link" style="color: #004d99; font-weight: bold; text-decoration: underline; cursor: pointer;">${fullCourseLabel}</a></span><br>
-                <small>CRN: ${item.crn || "N/A"}</small><br>
-                <small>Days: ${item.days || "N/A"} | Time: ${formattedTime}</small><br>
-                <small>Location: <a href="#" class="section-room-link" style="color: #0056b3; font-weight: bold; text-decoration: underline; cursor: pointer;">${rawLocation}</a></small>
-            `;
-
-            const courseLink = card.querySelector(".course-full-link");
-            if (courseLink) {
-                courseLink.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    displayCourseSections(item.course);
-                });
-            }
-
-            const roomLink = card.querySelector(".section-room-link");
-            if (roomLink && rawLocation !== "N/A") {
-                roomLink.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const bMatch = rawLocation.match(/^[A-Z]+/i);
-                    const rMatch = rawLocation.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || rawLocation.match(/([A-Z]?\d+[A-Z]?)/i);
-                    if (rMatch) {
-                        const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
-                        navigateToBuildingRoom(bCode, rMatch[1]);
-                    }
-                });
-            }
-
-            roomDescription.appendChild(card);
+            roomDescription.appendChild(buildProfessorCourseCard(item));
         });
 
     } catch (err) {
@@ -398,7 +367,7 @@ async function updateRoomInformation(room) {
     if (!roomName || !roomDescription || !room) return;
 
     let fullRoomId = room.dataset.name || room.id || room.dataset.room || "Selected Room";
-    const building = normalizeBuildingCode(document.body.dataset.building || "");
+    const building = (document.body.dataset.building || "").trim().toUpperCase();
     const today = getTodayCode();
 
     if (building && !fullRoomId.toUpperCase().startsWith(building)) {
@@ -436,7 +405,7 @@ async function updateRoomInformation(room) {
             profHeading.textContent = "Faculty Office Occupant(s):";
             roomDescription.appendChild(profHeading);
 
-            professors.forEach(prof => {
+            for (const prof of professors) {
                 const entry = document.createElement("div");
                 entry.className = "room-prof";
                 entry.style.margin = "8px 0";
@@ -479,11 +448,9 @@ async function updateRoomInformation(room) {
                     officeBtn.addEventListener("click", (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        const bMatch = officeLocation.match(/^[A-Z]+/i);
-                        const rMatch = officeLocation.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || officeLocation.match(/([A-Z]?\d+[A-Z]?)/i);
-                        if (rMatch) {
-                            const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
-                            navigateToBuildingRoom(bCode, rMatch[1]);
+                        const parsed = parseLocationParts(officeLocation);
+                        if (parsed.room) {
+                            navigateToBuildingRoom(parsed.building, parsed.room);
                         }
                     });
                 }
@@ -491,8 +458,25 @@ async function updateRoomInformation(room) {
                 entry.appendChild(detailsDiv);
                 roomDescription.appendChild(entry);
 
-                // Display the courses this professor is teaching during the semester
-                const profCourses = prof.courses || [];
+                // Display cards of the courses this professor is teaching during the semester
+                let profCourses = Array.isArray(prof.courses) ? prof.courses : null;
+                if (profCourses === null) {
+                    try {
+                        const searchUrl = new URL(`${RENDER_API_URL}/api/search`);
+                        searchUrl.searchParams.append("type", "instructor");
+                        searchUrl.searchParams.append("query", prof.name);
+                        const courseRes = await fetch(searchUrl.toString());
+                        if (courseRes.ok) {
+                            const courseData = await courseRes.json();
+                            profCourses = courseData.results || [];
+                        } else {
+                            profCourses = [];
+                        }
+                    } catch {
+                        profCourses = [];
+                    }
+                }
+
                 const coursesHeading = document.createElement("strong");
                 coursesHeading.textContent = `Courses Taught by ${prof.name}:`;
                 coursesHeading.style.marginTop = "12px";
@@ -507,51 +491,10 @@ async function updateRoomInformation(room) {
                     roomDescription.appendChild(noCourses);
                 } else {
                     profCourses.forEach(item => {
-                        const courseCard = document.createElement("div");
-                        courseCard.className = "prof-course-card";
-                        courseCard.style.marginTop = "8px";
-                        courseCard.style.padding = "8px";
-                        courseCard.style.background = "#f0f4f8";
-                        courseCard.style.borderRadius = "4px";
-
-                        const formattedTime = formatTimeRange(item.time);
-                        const rawLocation = item.location || "N/A";
-                        const fullCourseLabel = `${item.course}${item.title ? ` - ${item.title}` : ''}`;
-
-                        courseCard.innerHTML = `
-                            <span><a href="#" class="course-full-link" style="color: #004d99; font-weight: bold; text-decoration: underline; cursor: pointer;">${fullCourseLabel}</a></span><br>
-                            <small>CRN: ${item.crn || "N/A"}</small><br>
-                            <small>Days: ${item.days || "N/A"} | Time: ${formattedTime}</small><br>
-                            <small>Location: <a href="#" class="section-room-link" style="color: #0056b3; font-weight: bold; text-decoration: underline; cursor: pointer;">${rawLocation}</a></small>
-                        `;
-
-                        const courseLink = courseCard.querySelector(".course-full-link");
-                        if (courseLink) {
-                            courseLink.addEventListener("click", (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                displayCourseSections(item.course);
-                            });
-                        }
-
-                        const roomLink = courseCard.querySelector(".section-room-link");
-                        if (roomLink && rawLocation !== "N/A") {
-                            roomLink.addEventListener("click", (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const bMatch = rawLocation.match(/^[A-Z]+/i);
-                                const rMatch = rawLocation.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || rawLocation.match(/([A-Z]?\d+[A-Z]?)/i);
-                                if (rMatch) {
-                                    const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
-                                    navigateToBuildingRoom(bCode, rMatch[1]);
-                                }
-                            });
-                        }
-
-                        roomDescription.appendChild(courseCard);
+                        roomDescription.appendChild(buildProfessorCourseCard(item));
                     });
                 }
-            });
+            }
         }
 
         // -------------------------------------------------------------
@@ -610,13 +553,8 @@ function initializeRooms() {
         room.addEventListener("click", function (e) {
             e.stopPropagation();
 
-            // Clear previous room selection across all floor SVG overlays
             document.querySelectorAll(".room.selected").forEach(r => r.classList.remove("selected"));
-
-            // Highlight newly clicked room polygon
             this.classList.add("selected");
-
-            // Update sidebar content
             updateRoomInformation(this);
         });
     });
@@ -714,7 +652,7 @@ function setupSearchHandlers() {
         const dayVal = document.getElementById("filter-day").value;
         const timeVal = document.getElementById("filter-time").value.trim();
 
-        if (filterType === "office" && /^[A-Za-z]?\d{3,5}[A-Za-z]?$/.test(queryVal)) {
+        if (filterType === "office" && /^[A-Za-z]?\d{3,5}(?:-[A-Za-z0-9]+|[A-Za-z])?$/.test(queryVal)) {
             searchResults.textContent = "missing building name, use the following format (LUTR 121)";
             return;
         }
@@ -779,20 +717,14 @@ function setupSearchHandlers() {
                     `;
                 }
 
-                // Click event: Navigate to room polygon from search result card
                 card.addEventListener("click", () => {
                     const rawRoomStr = item.result_type === "professor" ? item.office : item.location;
                     if (!rawRoomStr) return;
 
-                    const buildingMatch = rawRoomStr.match(/^[A-Z]+/i);
-                    const roomMatch = rawRoomStr.match(/\s+([A-Z]?\d+[A-Z]?)$/i) || rawRoomStr.match(/([A-Z]?\d+[A-Z]?)/i);
+                    const parsed = parseLocationParts(rawRoomStr);
+                    if (!parsed.room) return;
 
-                    if (!roomMatch) return;
-
-                    const targetBuilding = buildingMatch ? normalizeBuildingCode(buildingMatch[0]) : "";
-                    const roomId = roomMatch[1];
-
-                    navigateToBuildingRoom(targetBuilding, roomId);
+                    navigateToBuildingRoom(parsed.building, parsed.room);
                 });
 
                 searchResults.appendChild(card);
