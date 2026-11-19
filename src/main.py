@@ -231,5 +231,16 @@ def search_courses(
                     "time": str(getattr(course, "time", "") or ""),
                     "location": str(getattr(course, "location", "") or "")
                 })
+    elif type == "professor":
+        for p in f.ProfessorName(query):
+            results.append({
+                "result_type": "professor",
+                "name": p.prof,
+                "office": p.office,
+                "email": p.email,
+                "department": p.department,
+                "college": p.college,
+                "website": p.website
+            })
 
     return {"results": results}
