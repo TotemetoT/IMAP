@@ -89,6 +89,20 @@ def ProfessorOffice(query):
             results.append(p)
     return results
 
+def ProfessorName(query):
+    query_tokens = dl.parse_name_parts(query)
+    if not query_tokens:
+        return []
+
+    results = []
+    for p in cfg.PROFS:
+        prof_tokens = getattr(p, "name_parts", None) or dl.parse_name_parts(p.prof or "")
+        if not prof_tokens:
+            continue
+        if all(_token_matches(q_tok, prof_tokens) for q_tok in query_tokens):
+            results.append(p)
+    return results
+
 
 # ==============================
 #        COURSE FILTERS

@@ -65,6 +65,77 @@ function setupCoordinateTracker() {
     });
 }
 
+// RENDER CLICKABLE INSTRUCTOR LINKS
+
+async function openProfessorByName(instructorName) {
+    const cleanName = (instructorName || "").trim();
+    if (!cleanName || cleanName === "N/A") return;
+
+    const roomName = document.getElementById("room-name");
+    const roomDescription = document.getElementById("room-description");
+
+    if (roomName) roomName.textContent = cleanName;
+    if (roomDescription) roomDescription.textContent = "Loading professor details and courses...";
+
+    try {
+        const url = new URL(`${RENDER_API_URL}/api/search`);
+        url.searchParams.append("type", "professor");
+        url.searchParams.append("query", cleanName);
+
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const data = await res.json();
+        const matches = data.results || [];
+
+        if (matches.length > 0) {
+            await displayProfessorDetails(matches[0]);
+            return;
+        }
+    } catch (err) {
+        console.error("Error looking up professor profile:", err);
+    }
+
+    // Fallback if the instructor is not listed in the faculty office CSV
+    await displayProfessorDetails({
+        name: cleanName,
+        office: "",
+        email: "",
+        department: "",
+        college: "",
+        website: ""
+    });
+}
+
+function buildInstructorLinks(rawInstructor) {
+    const container = document.createElement("span");
+    const text = (rawInstructor || "").trim();
+
+    if (!text || text === "N/A") {
+        container.textContent = "N/A";
+        return container;
+    }
+
+    const instructors = text.split(";").map(s => s.trim()).filter(Boolean);
+    instructors.forEach((instName, idx) => {
+        if (idx > 0) {
+            container.appendChild(document.createTextNode("; "));
+        }
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = instName;
+        link.style.cssText = "color: #0056b3; font-weight: bold; text-decoration: underline; cursor: pointer;";
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openProfessorByName(instName);
+        });
+        container.appendChild(link);
+    });
+
+    return container;
+}
+
 // ============================================================
 // BUILDING & ROOM NAVIGATION HELPERS
 // ============================================================
@@ -234,8 +305,13 @@ async function displayCourseSections(courseCode) {
                 <strong>CRN: ${item.crn || "N/A"}</strong> - <span>${fullCourseLabel}</span><br>
                 <small>Days: ${item.days || "N/A"} | Time: ${formattedTime}</small><br>
                 <small>Location: <a href="#" class="section-room-link" style="color: #0056b3; font-weight: bold; text-decoration: underline; cursor: pointer;">${rawLocation}</a></small><br>
-                <small>Instructor: ${item.instructor || "N/A"}</small>
+                <small class="instructor-line">Instructor: </small>
             `;
+
+            const instructorLine = entry.querySelector(".instructor-line");
+            if (instructorLine) {
+                instructorLine.appendChild(buildInstructorLinks(item.instructor));
+            }
 
             const roomLink = entry.querySelector(".section-room-link");
             if (roomLink && rawLocation !== "N/A") {
@@ -521,8 +597,13 @@ async function updateRoomInformation(room) {
                 entry.innerHTML = `
                     <strong>${formattedTime}</strong><br>
                     <span><a href="#" class="course-full-link" style="color: #004d99; font-weight: bold; text-decoration: underline; cursor: pointer;">${fullCourseLabel}</a></span><br>
-                    <small>Instructor: ${item.instructor || "N/A"}</small>
+                    <small class="instructor-line">Instructor: </small>
                 `;
+
+                const instructorLine = entry.querySelector(".instructor-line");
+                if (instructorLine) {
+                    instructorLine.appendChild(buildInstructorLinks(item.instructor));
+                }
 
                 const courseLink = entry.querySelector(".course-full-link");
                 if (courseLink) {
