@@ -35,7 +35,8 @@ def get_room_times(
 ):
     search_id = fullRoomId.strip().upper()
     room_number = search_id.split()[-1] if " " in search_id else search_id
-    building_prefix = building.upper() if building else (search_id.split()[0] if " " in search_id else "")
+    raw_building = building.upper() if building else (search_id.split()[0] if " " in search_id else "")
+    building_prefix = f.normalize_building(raw_building)
 
     matching_courses = []
 
@@ -46,10 +47,11 @@ def get_room_times(
 
         location_matches = False
         for loc in locations:
-            if building_prefix and building_prefix in loc and room_number in loc:
+            loc_building, loc_room = f.parse_building_room(loc)
+            if building_prefix and loc_building == building_prefix and loc_room == room_number:
                 location_matches = True
                 break
-            elif not building_prefix and (search_id in loc or room_number in loc):
+            elif not building_prefix and (search_id == loc or room_number == loc_room):
                 location_matches = True
                 break
 
@@ -63,19 +65,18 @@ def get_room_times(
                 "location": str(getattr(course, "location", "") or "")
             })
 
-    # Search for faculty matching this room/office
+    # Search for faculty matching BOTH the exact building code and room number
     professors = []
     for prof in cfg.PROFS:
-        p_office = str(getattr(prof, "office", "") or "").strip().upper()
-        if not p_office:
+        p_office_raw = str(getattr(prof, "office", "") or "").strip()
+        if not p_office_raw:
             continue
-        
-        # Match e.g. "LUTER 238" or "FORBES 3016" or room number alone
-        target_str = f"{building_prefix} {room_number}".strip() if building_prefix else search_id
-        if target_str in p_office or room_number in p_office.split():
+
+        p_building, p_room = f.parse_building_room(p_office_raw)
+        if building_prefix and p_building == building_prefix and p_room == room_number:
             professors.append({
                 "name": str(getattr(prof, "prof", "") or ""),
-                "office": str(getattr(prof, "office", "") or ""),
+                "office": p_office_raw,
                 "email": str(getattr(prof, "email", "") or ""),
                 "department": str(getattr(prof, "department", "") or ""),
                 "college": str(getattr(prof, "college", "") or ""),
@@ -176,7 +177,11 @@ def search_courses(
                 "website": p.website
             })
     elif type == "office":
-        profs = f.ProfessorOffice(query)
+        try:
+            profs = f.ProfessorOffice(query)
+        except ValueError as err:
+            return {"results": [], "error": str(err)}
+
         for p in profs:
             results.append({
                 "result_type": "professor",

@@ -1,6 +1,44 @@
 import csv
+import re
 import configs as cfg
 import utils as u
+
+BUILDING_ALIASES = {
+    "FORBES": "FORBES",
+    "LUTR": "LUTR",
+    "LUTER": "LUTR",
+    "TRIB": "TRIB",
+    "TRIBLE": "TRIB",
+    "TFAC": "TFAC",
+    "MCM": "MCM",
+    "MCMURRAN": "MCM",
+    "SERC": "SERC",
+    "FERG": "FERG",
+    "FERGUSON": "FERG",
+}
+
+def normalize_building(building_str):
+    if not building_str:
+        return ""
+    clean = re.sub(r"[^A-Z]", "", building_str.strip().upper())
+    return BUILDING_ALIASES.get(clean, clean)
+
+def parse_building_room(location_str):
+    """
+    Parses strings like 'Luter 238', 'FORBES 3016', or 'MCM 201J'
+    into ('LUTR', '238'), ('FORBES', '3016'), ('MCM', '201J').
+    """
+    if not location_str:
+        return "", ""
+    clean = location_str.strip().upper()
+    match = re.match(r"^([A-Z]+)\s+(\d{3,5}[A-Z]?)$", clean)
+    if match:
+        return normalize_building(match.group(1)), match.group(2)
+    return "", ""
+
+# ==============================
+#    PROFESSOR OFFICE FILTERS
+# ==============================
 
 def ProfessorDepartment(query):
     query = query.lower().strip()
@@ -11,15 +49,26 @@ def ProfessorCollege(query):
     return [p for p in cfg.PROFS if query in (p.college or "").lower()]
 
 def ProfessorOffice(query):
-    query = query.lower().strip()
+    clean_query = (query or "").strip()
+
+    # Check if user entered only a room number (3-5 digits + optional letter) without a building
+    if re.fullmatch(r"\d{3,5}[A-Za-z]?", clean_query):
+        raise ValueError("missing building name, use the following format (LUTR 121)")
+
+    target_building, target_room = parse_building_room(clean_query)
+    if not target_building or not target_room:
+        raise ValueError("missing building name, use the following format (LUTR 121)")
+
     results = []
     for p in cfg.PROFS:
-        office = (p.office or "").lower().strip()
-        if not office:
-            continue
-        if query in office:
+        p_building, p_room = parse_building_room(p.office or "")
+        if p_building == target_building and p_room == target_room:
             results.append(p)
     return results
+
+# ============================== 
+#        COURSE FILTERS
+# ==============================
 
 def CRN(val):
     for row in cfg.COURSES:
@@ -79,7 +128,7 @@ def ID_room(R, rooms=cfg.COURSES):
         if R in room.location:
             return room
 
-def Instructor(N, full=False): #TODO Fix this for more specific searches (maybe)
+def Instructor(N, full=False):
     if full: 
         courses = cfg.FULL_COURSES
     else: 
@@ -93,7 +142,6 @@ def Instructor(N, full=False): #TODO Fix this for more specific searches (maybe)
             I = I.split('; ')
             c = 0
             for i in I:
-                # print(I, i)
                 I[c] = i.split(', ')
                 c += 1
             for _ in range(len(I)):

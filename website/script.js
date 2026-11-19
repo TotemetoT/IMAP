@@ -5,6 +5,26 @@ const BASE_PATH = window.location.hostname.includes("github.io")
     ? `/${window.location.pathname.split("/")[1]}`
     : "";
 
+const BUILDING_ALIASES = {
+    "FORBES": "FORBES",
+    "LUTR": "LUTR",
+    "LUTER": "LUTR",
+    "TRIB": "TRIB",
+    "TRIBLE": "TRIB",
+    "TFAC": "TFAC",
+    "MCM": "MCM",
+    "MCMURRAN": "MCM",
+    "SERC": "SERC",
+    "FERG": "FERG",
+    "FERGUSON": "FERG"
+};
+
+function normalizeBuildingCode(rawCode) {
+    if (!rawCode) return "";
+    const clean = rawCode.trim().toUpperCase();
+    return BUILDING_ALIASES[clean] || clean;
+}
+
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
@@ -62,8 +82,8 @@ function setupCoordinateTracker() {
 function navigateToBuildingRoom(buildingCode, roomId) {
     if (!roomId) return;
 
-    const currentBuilding = (document.body.dataset.building || "").toUpperCase();
-    const targetBuilding = (buildingCode || "").toUpperCase();
+    const currentBuilding = normalizeBuildingCode(document.body.dataset.building || "");
+    const targetBuilding = normalizeBuildingCode(buildingCode || "");
 
     const buildingPages = {
         "TFAC": `${BASE_PATH}/website/Buildings/TFAC/index.html`,
@@ -203,7 +223,7 @@ async function displayCourseSections(courseCode) {
                     const rMatch = rawLocation.match(/\d+[A-Z]?/i);
 
                     if (rMatch) {
-                        const bCode = bMatch ? bMatch[0].toUpperCase() : (document.body.dataset.building || "");
+                        const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
                         navigateToBuildingRoom(bCode, rMatch[0]);
                     }
                 });
@@ -236,7 +256,7 @@ async function displayProfessorDetails(prof) {
         const bMatch = officeLocation.match(/^[A-Z]+/i);
         const rMatch = officeLocation.match(/\d+[A-Z]?/i);
         if (rMatch) {
-            const bCode = bMatch ? bMatch[0].toUpperCase() : (document.body.dataset.building || "");
+            const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
             navigateToBuildingRoom(bCode, rMatch[0]);
         }
     }
@@ -279,7 +299,7 @@ async function displayProfessorDetails(prof) {
                 const bMatch = officeLocation.match(/^[A-Z]+/i);
                 const rMatch = officeLocation.match(/\d+[A-Z]?/i);
                 if (rMatch) {
-                    const bCode = bMatch ? bMatch[0].toUpperCase() : (document.body.dataset.building || "");
+                    const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
                     navigateToBuildingRoom(bCode, rMatch[0]);
                 }
             });
@@ -352,7 +372,7 @@ async function displayProfessorDetails(prof) {
                     const bMatch = rawLocation.match(/^[A-Z]+/i);
                     const rMatch = rawLocation.match(/\d+[A-Z]?/i);
                     if (rMatch) {
-                        const bCode = bMatch ? bMatch[0].toUpperCase() : (document.body.dataset.building || "");
+                        const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
                         navigateToBuildingRoom(bCode, rMatch[0]);
                     }
                 });
@@ -465,7 +485,7 @@ async function updateRoomInformation(room) {
                         const bMatch = officeLocation.match(/^[A-Z]+/i);
                         const rMatch = officeLocation.match(/\d+[A-Z]?/i);
                         if (rMatch) {
-                            const bCode = bMatch ? bMatch[0].toUpperCase() : (document.body.dataset.building || "");
+                            const bCode = bMatch ? normalizeBuildingCode(bMatch[0]) : (document.body.dataset.building || "");
                             navigateToBuildingRoom(bCode, rMatch[0]);
                         }
                     });
@@ -576,6 +596,7 @@ function setupSearchHandlers() {
     const filterTypeSelect = document.getElementById("filter-type");
     const queryField = document.getElementById("query-field");
     const queryLabel = document.getElementById("query-label");
+    const queryInput = document.getElementById("filter-query");
     const timeOptions = document.getElementById("time-options");
     const searchForm = document.getElementById("course-search-form");
     const searchResults = document.getElementById("search-results");
@@ -613,11 +634,22 @@ function setupSearchHandlers() {
                     instructor: "Instructor name:",
                     department: "Department name:",
                     college: "College name:",
-                    office: "Office room (e.g., LUTR 238):",
+                    office: "Office room (e.g., LUTR 121):",
                     location: "Building / location:",
                     room: "Room ID:"
                 };
+                const placeholders = {
+                    course: "e.g., CPSC 150",
+                    crn: "e.g., 8022",
+                    instructor: "e.g., Accardi",
+                    department: "e.g., Physics",
+                    college: "e.g., Arts and Humanities",
+                    office: "e.g., LUTR 121",
+                    location: "e.g., FORBES",
+                    room: "e.g., LUTR 238"
+                };
                 queryLabel.textContent = labels[val] || "Search query:";
+                if (queryInput) queryInput.placeholder = placeholders[val] || "";
             }
         });
     }
@@ -638,6 +670,14 @@ function setupSearchHandlers() {
         const dayVal = document.getElementById("filter-day").value;
         const timeVal = document.getElementById("filter-time").value.trim();
 
+        // Validate that office searches include a building name + room number
+        if (filterType === "office") {
+            if (/^\d{3,5}[A-Za-z]?$/.test(queryVal) || !/^[A-Za-z]+\s+\d{3,5}[A-Za-z]?$/.test(queryVal)) {
+                searchResults.textContent = "missing building name, use the following format (LUTR 121)";
+                return;
+            }
+        }
+
         searchResults.textContent = "Searching...";
 
         try {
@@ -651,6 +691,12 @@ function setupSearchHandlers() {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
             const data = await res.json();
+
+            if (data.error) {
+                searchResults.textContent = data.error;
+                return;
+            }
+
             const results = data.results;
 
             if (!results || results.length === 0) {
@@ -702,7 +748,7 @@ function setupSearchHandlers() {
 
                     if (!roomMatch) return;
 
-                    const targetBuilding = buildingMatch ? buildingMatch[0].toUpperCase() : "";
+                    const targetBuilding = buildingMatch ? normalizeBuildingCode(buildingMatch[0]) : "";
                     const roomId = roomMatch[0];
 
                     navigateToBuildingRoom(targetBuilding, roomId);
