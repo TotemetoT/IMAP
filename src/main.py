@@ -34,24 +34,25 @@ def get_room_times(
     day: str = Query("M")
 ):
     search_id = fullRoomId.strip().upper()
-    room_number = search_id.split()[-1] if " " in search_id else search_id
-    raw_building = building.upper() if building else (search_id.split()[0] if " " in search_id else "")
-    building_prefix = f.normalize_building(raw_building)
+    parsed_b, parsed_r = f.parse_building_room(search_id)
+
+    building_prefix = f.normalize_building(building) if building else parsed_b
+    room_number = parsed_r if parsed_r else (search_id.split()[-1] if " " in search_id else search_id)
 
     matching_courses = []
 
     for course in cfg.COURSES:
         c_location = str(getattr(course, "location", "") or "").upper()
         c_days = str(getattr(course, "days", "") or "")
-        locations = [x.strip() for x in c_location.split(";")]
+        locations = [x.strip() for x in c_location.split(";") if x.strip()]
 
         location_matches = False
         for loc in locations:
-            loc_building, loc_room = f.parse_building_room(loc)
-            if building_prefix and loc_building == building_prefix and loc_room == room_number:
+            loc_b, loc_r = f.parse_building_room(loc)
+            if building_prefix and loc_b == building_prefix and loc_r == room_number:
                 location_matches = True
                 break
-            elif not building_prefix and (search_id == loc or room_number == loc_room):
+            elif not building_prefix and (search_id == loc or room_number == loc_r):
                 location_matches = True
                 break
 
@@ -61,30 +62,44 @@ def get_room_times(
                 "title": str(getattr(course, "title", "") or ""),
                 "instructor": str(getattr(course, "instructor", "") or ""),
                 "crn": str(getattr(course, "CRN", "") or ""),
+                "days": str(getattr(course, "days", "") or ""),
                 "time": str(getattr(course, "time", "") or ""),
                 "location": str(getattr(course, "location", "") or "")
             })
 
-    # Search for faculty matching BOTH the exact building code and room number
+    # Match faculty by normalized building + exact room number
     professors = []
     for prof in cfg.PROFS:
         p_office_raw = str(getattr(prof, "office", "") or "").strip()
         if not p_office_raw:
             continue
 
-        p_building, p_room = f.parse_building_room(p_office_raw)
-        if building_prefix and p_building == building_prefix and p_room == room_number:
+        p_b, p_r = f.parse_building_room(p_office_raw)
+        if building_prefix and p_b == building_prefix and p_r == room_number:
+            prof_name = str(getattr(prof, "prof", "") or "")
+            prof_courses = [
+                {
+                    "course": str(getattr(c, "course", "") or ""),
+                    "title": str(getattr(c, "title", "") or ""),
+                    "crn": str(getattr(c, "CRN", "") or ""),
+                    "days": str(getattr(c, "days", "") or ""),
+                    "time": str(getattr(c, "time", "") or ""),
+                    "location": str(getattr(c, "location", "") or "")
+                }
+                for c in f.Instructor(prof_name)
+            ]
             professors.append({
-                "name": str(getattr(prof, "prof", "") or ""),
+                "name": prof_name,
                 "office": p_office_raw,
                 "email": str(getattr(prof, "email", "") or ""),
                 "department": str(getattr(prof, "department", "") or ""),
                 "college": str(getattr(prof, "college", "") or ""),
-                "website": str(getattr(prof, "website", "") or "")
+                "website": str(getattr(prof, "website", "") or ""),
+                "courses": prof_courses
             })
 
     try:
-        raw_times = f.RoomTimes(room_number, day)
+        raw_times = f.RoomTimes(room_number, day, building_prefix)
     except Exception:
         raw_times = []
 
@@ -113,6 +128,7 @@ def search_courses(
                 "title": str(getattr(course, "title", "") or ""),
                 "instructor": str(getattr(course, "instructor", "") or ""),
                 "crn": str(getattr(course, "CRN", "") or ""),
+                "days": str(getattr(course, "days", "") or ""),
                 "time": str(getattr(course, "time", "") or ""),
                 "location": str(getattr(course, "location", "") or "")
             })
@@ -125,6 +141,7 @@ def search_courses(
                 "title": str(getattr(match, "title", "") or ""),
                 "instructor": str(getattr(match, "instructor", "") or ""),
                 "crn": str(getattr(match, "CRN", "") or ""),
+                "days": str(getattr(match, "days", "") or ""),
                 "time": str(getattr(match, "time", "") or ""),
                 "location": str(getattr(match, "location", "") or "")
             })
@@ -137,6 +154,7 @@ def search_courses(
                 "title": str(getattr(course, "title", "") or ""),
                 "instructor": str(getattr(course, "instructor", "") or ""),
                 "crn": str(getattr(course, "CRN", "") or ""),
+                "days": str(getattr(course, "days", "") or ""),
                 "time": str(getattr(course, "time", "") or ""),
                 "location": str(getattr(course, "location", "") or "")
             })
@@ -149,6 +167,7 @@ def search_courses(
                 "title": str(getattr(course, "title", "") or ""),
                 "instructor": str(getattr(course, "instructor", "") or ""),
                 "crn": str(getattr(course, "CRN", "") or ""),
+                "days": str(getattr(course, "days", "") or ""),
                 "time": str(getattr(course, "time", "") or ""),
                 "location": str(getattr(course, "location", "") or "")
             })
@@ -202,6 +221,7 @@ def search_courses(
                     "title": str(getattr(course, "title", "") or ""),
                     "instructor": str(getattr(course, "instructor", "") or ""),
                     "crn": str(getattr(course, "CRN", "") or ""),
+                    "days": str(getattr(course, "days", "") or ""),
                     "time": str(getattr(course, "time", "") or ""),
                     "location": str(getattr(course, "location", "") or "")
                 })
